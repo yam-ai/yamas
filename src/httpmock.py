@@ -25,6 +25,9 @@ def run(ip, port):
     print('HTTP server is running.')
     httpd.serve_forever()
 
+def usage(progname):
+    print('{}: [-e | --endpoint server_address:port]')
+
 if __name__ == '__main__':
     try:
         opts, args = getopt(sys.argv[1:], 'e', ['endpoint='])
