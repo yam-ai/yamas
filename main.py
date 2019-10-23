@@ -11,17 +11,19 @@ DEFAULT_PORT = 8000
 
 
 def run(ip: str, port: int):
-    print('HTTP server is starting on {}:{}...'.format(ip, port))
+    print(f'HTTP server is starting on {ip}:{port}...')
     server_address = (ip, port)
     httpd = HTTPServer(server_address, MockRequestHandler)
     print('HTTP server is running.')
     httpd.serve_forever()
+    return
 
 
 def usage(progname: str, err: Exception):
     print(err)
-    print('Usage: {} [-e | --endpoint server_address:port]'.format(progname),
+    print(f'Usage: {progname} [-e | --endpoint server_address:port]',
           file=sys.stderr)
+    return
 
 
 if __name__ == '__main__':
@@ -41,4 +43,4 @@ if __name__ == '__main__':
     try:
         run(ip, port)
     except OSError as e:
-        print('Failed to start server: {}'.format(e))
+        print(f'Failed to start server: {e}')

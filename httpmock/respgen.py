@@ -13,8 +13,9 @@ class Method(Enum):
 
 
 class Request:
-    def __init__(self, method: Method, headers: dict, body: BufferedIOBase):
+    def __init__(self, method: Method, path: str, headers: dict, body: BufferedIOBase):
         self.method = method
+        self.path = path
         self.headers = headers
         self.body = body
 
@@ -36,28 +37,26 @@ class Response:
         self.status = status
         self.headers = headers
         self.body = body
+        return
 
     def write_body(self, wfile: BufferedIOBase):
         body_content = self.body
         body_type = type(body_content)
         try:
-            if body_type == str:
+            if body_type is str:
                 wfile.write(body_content.encode())
-            elif body_type == dict:
+            elif body_type is dict:
                 json.dump(body_content, wfile)
-            elif body_type == bytes:
+            elif body_type is bytes:
                 wfile.write(body_content)
             elif body_content is None:
                 wfile.write(b'')
         except Exception as e:
             raise ResponseError(e)
+        return
 
 
 class ResponseGenerator:
 
     def respond(self, request: Request) -> Response:
         return Response(HTTPStatus.NOT_IMPLEMENTED, {}, None)
-
-
-class RegexRespGen(ResponseGenerator):
-    pass

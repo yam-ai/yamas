@@ -1,3 +1,4 @@
+
 from http.server import BaseHTTPRequestHandler
 from httpmock.respgen import ResponseGenerator, Response, Request, Method
 
@@ -7,7 +8,7 @@ class MockRequestHandler(BaseHTTPRequestHandler):
     respgen = ResponseGenerator()
 
     def respond(self, method: Method):
-        request = Request(Method.GET, self.headers, self.rfile)
+        request = Request(Method.GET, self.path, self.headers, self.rfile)
         response = self.respgen.respond(request)
         for k, v in response.headers:
             self.send_header(k, v)
@@ -20,9 +21,9 @@ class MockRequestHandler(BaseHTTPRequestHandler):
         return
 
     def do_GET(self):
-        self.respond(Method.GET)
+        self.respond(Method.GET, self.path, self.headers)
         return
 
     def do_POST(self):
-        self.respond(Method.POST)
+        self.respond(Method.GET, self.path, self.headers)
         return

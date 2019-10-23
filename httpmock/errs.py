@@ -8,3 +8,7 @@ class ResponseError(HTTPMockException):
 
 class RequestError(HTTPMockException):
     pass
+
+
+class GeneratorError(HTTPMockException):
+    pass
