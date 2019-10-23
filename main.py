@@ -1,38 +1,27 @@
 # coding=utf-8
 
-from http.server import BaseHTTPRequestHandler, HTTPServer
 import os
 import sys
 from getopt import getopt, GetoptError
+from http.server import HTTPServer
+from httpmock.mock import MockRequestHandler
 
 DEFAULT_IP = '127.0.0.1'
 DEFAULT_PORT = 8000
 
 
-class HTTPMock(BaseHTTPRequestHandler):
-    def do_GET(self):
-        self.send_response(200)
-        self.wfile.write('GET {}'.format(self.path).encode())
-        return
-
-    def do_POST(self):
-        self.send_response(200)
-        self.wfile.write('POST {}'.format(self.path).encode())
-        return
-
-
-def run(ip, port):
+def run(ip: str, port: int):
     print('HTTP server is starting on {}:{}...'.format(ip, port))
     server_address = (ip, port)
-    httpd = HTTPServer(server_address, HTTPMock)
+    httpd = HTTPServer(server_address, MockRequestHandler)
     print('HTTP server is running.')
     httpd.serve_forever()
 
 
-def usage(progname, err):
+def usage(progname: str, err: Exception):
     print(err)
-    print(
-        'Usage: {} [-e | --endpoint server_address:port]'.format(progname), file=sys.stderr)
+    print('Usage: {} [-e | --endpoint server_address:port]'.format(progname),
+          file=sys.stderr)
 
 
 if __name__ == '__main__':
