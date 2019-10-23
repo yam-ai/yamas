@@ -2,9 +2,12 @@
 
 import os
 import sys
+import re
 from getopt import getopt, GetoptError
-from http.server import HTTPServer
-from httpmock.mock import MockRequestHandler
+from http.server import HTTPServer, HTTPStatus
+from httpmock.mock import make_handler_class
+from httpmock.respgen import Method
+from httpmock.patrespgen import PatternResponseGenerator
 
 DEFAULT_IP = '127.0.0.1'
 DEFAULT_PORT = 8000
@@ -13,7 +16,11 @@ DEFAULT_PORT = 8000
 def run(ip: str, port: int):
     print(f'HTTP server is starting on {ip}:{port}...')
     server_address = (ip, port)
-    httpd = HTTPServer(server_address, MockRequestHandler)
+    prg = PatternResponseGenerator()
+    prg.add_matcher(Method.GET, re.compile('^/hello/.*$'),
+                    HTTPStatus.OK, {}, 'Hello, World!')
+    HelloWorldHandler = make_handler_class('HelloWorldHandler', prg)
+    httpd = HTTPServer(server_address, HelloWorldHandler)
     print('HTTP server is running.')
     httpd.serve_forever()
     return
