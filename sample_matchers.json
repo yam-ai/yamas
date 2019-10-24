@@ -1,0 +1,20 @@
+{
+    "GET": {
+        "/hello/\\w+/world/\\d+": {
+            "status": 200,
+            "body": "Hello, world!"
+        },
+        "/hi/.+/there/.*": {
+            "body": {
+                "Hi": "there",
+                "Come": "get me "
+            }
+        }
+    },
+    "POST": {
+        "/greet/me": {
+            "status": 200,
+            "body": "keep me posted"
+        }
+    }
+}
