@@ -5,18 +5,19 @@ from httpmock.respgen import ResponseGenerator, Response, Request, Method
 
 
 def make_handler_class(name: str, respgen: ResponseGenerator) -> Callable:
-    return type(name, (ResponseGenerator,), {'respgen': respgen})
+    return type(name, (MockRequestHandler,), {'respgen': respgen})
 
 
 class MockRequestHandler(BaseHTTPRequestHandler):
 
     respgen = ResponseGenerator()
 
-    def respond(self, method: Method):
+    def respond(self, method: Method, path: str, headers: dict):
         request = Request(Method.GET, self.path, self.headers, self.rfile)
         response = self.respgen.respond(request)
-        for k, v in response.headers:
-            self.send_header(k, v)
+        if response.headers:
+            for k, v in response.headers.items():
+                self.send_header(k, v)
         status_value = response.status.value
         if 200 <= status_value < 300:
             self.send_response(response.status.value)

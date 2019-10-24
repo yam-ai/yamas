@@ -46,11 +46,17 @@ class Response:
             if body_type is str:
                 wfile.write(body_content.encode())
             elif body_type is dict:
-                json.dump(body_content, wfile)
+                if not self.headers:
+                    self.headers = dict()
+                if 'Content-Type' not in self.headers:
+                    self.headers['Content-Type'] = 'application/json'
+                wfile.write(json.dumps(body_content).encode('utf-8'))
             elif body_type is bytes:
                 wfile.write(body_content)
             elif body_content is None:
                 wfile.write(b'')
+            else:
+                raise ResponseError(f'Unsupported body type {body_type}')
         except Exception as e:
             raise ResponseError(e)
         return
