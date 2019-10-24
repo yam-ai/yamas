@@ -3,8 +3,8 @@ from collections import OrderedDict
 from json import loads
 from http import HTTPStatus
 from typing import Pattern
-from httpmock.respgen import Method, Request, Response, ResponseGenerator
-from httpmock.errs import GeneratorError
+from yamas.respgen import Method, Request, Response, ResponseGenerator
+from yamas.errs import GeneratorError
 
 
 class PatternResponseGenerator(ResponseGenerator):

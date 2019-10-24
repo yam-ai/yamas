@@ -4,7 +4,7 @@ import json
 from http import HTTPStatus
 from io import BufferedIOBase
 from enum import Enum
-from httpmock.errs import RequestError, ResponseError
+from yamas.errs import RequestError, ResponseError
 
 
 class Method(Enum):

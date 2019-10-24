@@ -1,7 +1,6 @@
-
 from typing import Callable
 from http.server import BaseHTTPRequestHandler
-from httpmock.respgen import ResponseGenerator, Response, Request, Method
+from yamas.respgen import ResponseGenerator, Response, Request, Method
 
 
 def make_handler_class(name: str, respgen: ResponseGenerator) -> Callable:

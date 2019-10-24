@@ -5,10 +5,10 @@ import sys
 import re
 from getopt import getopt, GetoptError
 from http.server import HTTPServer, HTTPStatus
-from httpmock.mock import make_handler_class
-from httpmock.respgen import Method, ResponseGenerator
-from httpmock.patrespgen import PatternResponseGenerator
-from httpmock.errs import GeneratorError
+from yamas.mock import make_handler_class
+from yamas.respgen import Method, ResponseGenerator
+from yamas.patrespgen import PatternResponseGenerator
+from yamas.errs import GeneratorError
 
 DEFAULT_IP = '127.0.0.1'
 DEFAULT_PORT = 8000
@@ -29,8 +29,7 @@ def halt(progname: str, err: str, exit_code: int = 0):
     print(err, file=sys.stderr)
     print(f'Usage: {progname} [-e | --endpoint server_address:port]',
           file=sys.stderr)
-    if exit_code != 0:
-        sys.exit(0)
+    sys.exit(0)
     return
 
 
