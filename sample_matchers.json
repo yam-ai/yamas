@@ -1,20 +1,27 @@
 {
-    "GET": {
-        "/hello/\\w+/world/\\d+": {
+    "/users/\\w+/todo/\\d+": {
+        "GET": {
             "status": 200,
-            "body": "Hello, world!"
-        },
-        "/hi/.+/there/.*": {
             "body": {
-                "Hi": "there",
-                "Come": "get me "
+                "id": 123,
+                "task": "Buy milk",
+                "pri": "low"
+            }
+        },
+        "POST": {
+            "status": 201,
+            "body": {
+                "id": 123
             }
         }
     },
-    "POST": {
-        "/greet/me": {
+    "/users/\\w+/profile.xml": {
+        "GET": {
             "status": 200,
-            "body": "keep me posted"
+            "headers": {
+                "Content-Type": "application/xml"
+            },
+            "body": "<profile><username>tomlee</username><fullname>Tom Lee</fullname><grade>VIP</grade></profile>"
         }
     }
 }
