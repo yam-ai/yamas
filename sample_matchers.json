@@ -1,0 +1,27 @@
+{
+    "/users/\\w+/todo/\\d+": {
+        "GET": {
+            "status": 200,
+            "body": {
+                "id": 123,
+                "task": "Buy milk",
+                "pri": "low"
+            }
+        },
+        "POST": {
+            "status": 201,
+            "body": {
+                "id": 123
+            }
+        }
+    },
+    "/users/\\w+/profile.xml": {
+        "GET": {
+            "status": 200,
+            "headers": {
+                "Content-Type": "application/xml"
+            },
+            "body": "<profile><username>tomlee</username><fullname>Tom Lee</fullname><grade>VIP</grade></profile>"
+        }
+    }
+}

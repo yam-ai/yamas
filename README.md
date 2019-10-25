@@ -1,3 +1,3 @@
-# httpmock
+# Yamas - Yet Another Mock API Server
 
-Yet another mock HTTP server
+This project develops a mock API server for testing client applications.
