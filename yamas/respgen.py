@@ -37,28 +37,28 @@ class Request:
 class Response:
     def __init__(self, status: HTTPStatus, headers: dict, body: any):
         self.status = status
-        self.headers = headers
-        self.body = body
-        return
-
-    def write_body(self, wfile: BufferedIOBase):
-        body_content = self.body
-        body_type = type(body_content)
-        try:
+        content = None
+        if body:
+            body_type = type(body)
+            content_type = None
             if body_type is str:
-                wfile.write(body_content.encode())
+                content = body.encode('utf-8')
+                content_type = 'text/plain'
             elif body_type is dict:
-                if not self.headers:
-                    self.headers = dict()
-                if 'Content-Type' not in self.headers:
-                    self.headers['Content-Type'] = 'application/json'
-                wfile.write(dumps(body_content).encode('utf-8'))
+                try:
+                    content = dumps(body).encode('utf-8')
+                except Exception as e:
+                    raise ResponseError('Failed to encode dict into JSON')
+                content_type = 'application/json'
             elif body_type is bytes:
-                wfile.write(body_content)
-            elif body_content is not None:
-                raise ResponseError(f'Unsupported body type {body_type}')
-        except Exception as e:
-            raise ResponseError(e)
+                content = body
+            if content_type:
+                if not headers:
+                    headers = dict()
+                if not headers.get('Content-Type'):
+                    headers['Content-Type'] = content_type
+        self.headers = headers
+        self.body = content
         return
 
 

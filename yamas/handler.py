@@ -5,7 +5,10 @@ from http import HTTPStatus
 
 
 def make_handler_class(name: str, respgen: ResponseGenerator) -> Callable:
-    return type(name, (MockRequestHandler,), {'respgen': respgen})
+    handler_class = type(name, (MockRequestHandler,), {'respgen': respgen})
+    handler_class.server_version = 'Yamas - Yet another mock API server'
+    handler_class.sys_version = ''
+    return handler_class
 
 
 class MockRequestHandler(BaseHTTPRequestHandler):
@@ -25,7 +28,7 @@ class MockRequestHandler(BaseHTTPRequestHandler):
             for k, v in response.headers.items():
                 self.send_header(k, v)
         self.end_headers()
-        response.write_body(self.wfile)
+        self.wfile.write(response.body)
         return
 
     def do_GET(self):
