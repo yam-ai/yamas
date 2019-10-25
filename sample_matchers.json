@@ -1,20 +1,23 @@
 {
-    "GET": {
-        "/hello/\\w+/world/\\d+": {
+    "/hello/\\w+/world/\\d+": {
+        "GET": {
             "status": 200,
-            "body": "Hello, world!"
-        },
-        "/hi/.+/there/.*": {
             "body": {
-                "Hi": "there",
-                "Come": "get me "
+                "hello": "world",
+                "hi": "there"
             }
+        },
+        "POST": {
+            "status": 200,
+            "body": "Hello, World"
         }
     },
-    "POST": {
-        "/greet/me": {
-            "status": 200,
-            "body": "keep me posted"
+    "/greet/[\\w/]*/me/\\w*": {
+        "POST": {
+            "status": 301,
+            "body": {
+                "location": "I am moved"
+            }
         }
     }
 }

@@ -5,9 +5,8 @@ import sys
 import re
 from getopt import getopt, GetoptError
 from http.server import HTTPServer, HTTPStatus
-from yamas.mock import make_handler_class
-from yamas.respgen import Method, ResponseGenerator
-from yamas.patrespgen import PatternResponseGenerator
+from yamas.handler import make_handler_class
+from yamas.respgen import Method, ResponseGenerator, PatternResponseGenerator
 from yamas.errs import GeneratorError
 
 DEFAULT_IP = '127.0.0.1'
