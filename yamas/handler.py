@@ -15,8 +15,8 @@
 
 from typing import Callable
 from http.server import BaseHTTPRequestHandler
-from yamas.respgen import ResponseGenerator, Response, Request, Method
 from http import HTTPStatus
+from respgen import ResponseGenerator, Response, Request, Method
 
 
 def make_handler_class(name: str, respgen: ResponseGenerator) -> Callable:

@@ -19,9 +19,9 @@ import sys
 import re
 from getopt import getopt, GetoptError
 from http.server import HTTPServer, HTTPStatus
-from yamas.handler import make_handler_class
-from yamas.respgen import Method, ResponseGenerator, PatternResponseGenerator
-from yamas.errs import GeneratorError
+from handler import make_handler_class
+from respgen import Method, ResponseGenerator, PatternResponseGenerator
+from ex import GeneratorError
 
 DEFAULT_IP = '0.0.0.0'
 DEFAULT_PORT = 7777
@@ -40,7 +40,7 @@ def run(ip: str, port: int, generator: PatternResponseGenerator):
 
 def halt(progname: str, err: str, exit_code: int = 0):
     print(err, file=sys.stderr)
-    print(f'Usage: {progname} [-e | --endpoint server_address:port] -f mock_responses_file',
+    print(f'Usage: {progname} [-e|--endpoint server_address:port] -f|--file mock_responses_file',
           file=sys.stderr)
     sys.exit(0)
     return
