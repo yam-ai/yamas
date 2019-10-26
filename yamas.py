@@ -9,8 +9,8 @@ from yamas.handler import make_handler_class
 from yamas.respgen import Method, ResponseGenerator, PatternResponseGenerator
 from yamas.errs import GeneratorError
 
-DEFAULT_IP = '127.0.0.1'
-DEFAULT_PORT = 8000
+DEFAULT_IP = '0.0.0.0'
+DEFAULT_PORT = 7777
 
 
 def run(ip: str, port: int, generator: PatternResponseGenerator):
@@ -26,7 +26,7 @@ def run(ip: str, port: int, generator: PatternResponseGenerator):
 
 def halt(progname: str, err: str, exit_code: int = 0):
     print(err, file=sys.stderr)
-    print(f'Usage: {progname} [-e | --endpoint server_address:port]',
+    print(f'Usage: {progname} [-e | --endpoint server_address:port] -f mock_responses_file',
           file=sys.stderr)
     sys.exit(0)
     return

@@ -98,7 +98,7 @@ class PatternResponseGenerator(ResponseGenerator):
         self.matchers = OrderedDict()
         return
 
-    def load_from_dict(self, matcher_dict: dict):
+    def load_from_dict(self, matcher_dict: OrderedDict):
         for pat, resps in matcher_dict.items():
             try:
                 cpat = re.compile(pat)
@@ -121,7 +121,7 @@ class PatternResponseGenerator(ResponseGenerator):
 
     def load_from_json(self, matcher_json: str):
         try:
-            matcher_dict = loads(matcher_json)
+            matcher_dict = loads(matcher_json, object_pairs_hook=OrderedDict)
         except Exception as e:
             raise GeneratorError(f'Failed to parse JSON: {e}')
         self.load_from_dict(matcher_dict)
