@@ -1,3 +1,18 @@
+# coding=utf-8
+# Copyright 2019 YAM AI Machinery Limited
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import re
 from collections import OrderedDict
 from json import loads, dumps
@@ -44,10 +59,10 @@ class Response:
             if body_type is str:
                 content = body.encode('utf-8')
                 content_type = 'text/plain'
-            elif body_type is dict:
+            elif body_type in [dict, OrderedDict]:
                 try:
                     content = dumps(body).encode('utf-8')
-                except Exception as e:
+                except Exception:
                     raise ResponseError('Failed to encode dict into JSON')
                 content_type = 'application/json'
             elif body_type is bytes:
@@ -98,7 +113,7 @@ class PatternResponseGenerator(ResponseGenerator):
         self.matchers = OrderedDict()
         return
 
-    def load_from_dict(self, matcher_dict: dict):
+    def load_from_dict(self, matcher_dict: OrderedDict):
         for pat, resps in matcher_dict.items():
             try:
                 cpat = re.compile(pat)
@@ -121,7 +136,7 @@ class PatternResponseGenerator(ResponseGenerator):
 
     def load_from_json(self, matcher_json: str):
         try:
-            matcher_dict = loads(matcher_json)
+            matcher_dict = loads(matcher_json, object_pairs_hook=OrderedDict)
         except Exception as e:
             raise GeneratorError(f'Failed to parse JSON: {e}')
         self.load_from_dict(matcher_dict)
