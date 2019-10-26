@@ -41,6 +41,6 @@ setup(
     author_email='thomaslee@yam.ai',
     include_page_data=True,
     zip_safe=True,
-    scripts=['bin/yamas.py'],
+    scripts=['bin/yamas'],
     packages=find_packages(),
 )
