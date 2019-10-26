@@ -21,7 +21,7 @@
             "headers": {
                 "Content-Type": "application/xml"
             },
-            "body": "<profile><username>tomlee</username><fullname>Tom Lee</fullname><grade>VIP</grade></profile>"
+            "body": "<profile><user>tomlee</user><org>yam.ai</org><grade>premium</grade></profile>"
         }
     }
 }
