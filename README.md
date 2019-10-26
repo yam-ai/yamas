@@ -69,7 +69,7 @@ The mock response object contains the following:
 * `headers` specifies a JSON object containing the header names and values. If there are no user-defined headers, `headers` can be omitted.
 * `body` specifies the body of the response. Its value can be either a string or a JSON object.If the value is a string, the response body will be in plain text. If the value is a JSON object, the response body will be the same JSON object; and the `Content-Type: application/json` header will be automatically added unless it is overrided by a different `Content-Type` header specified in the `headers` value.
 
-## Profesional services
+## Professional services
 
 If you need any supporting or consultancy services from YAM AI Machinery, please find us at:
 
