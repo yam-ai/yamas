@@ -25,7 +25,7 @@ yamas.py -e localhost:8080 -f mock_responses.json
 
 ## Specification of mock responses
 
-The mock responses and the rules of selecting them are specified in a JSON file, which is given on the command line. A sample specificiation is given as follows:
+The mock responses and the rules of selecting them are specified in a JSON file, which is given on the command line. A sample specification is given as follows:
 
 ```json
 {
@@ -51,7 +51,7 @@ The mock responses and the rules of selecting them are specified in a JSON file,
             "headers": {
                 "Content-Type": "application/xml"
             },
-            "body": "<profile><username>tomlee</username><fullname>Tom Lee</fullname><grade>VIP</grade></profile>"
+            "body": "<profile><user>tomlee</user><name>Tom Lee</name><org>yam.ai</org><grade>premium</grade></profile>"
         }
     }
 }
