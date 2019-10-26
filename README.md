@@ -14,7 +14,7 @@ Yamas provides a command-line interface as follows:
 yamas.py [-e|--endpoint host:port] -f|--file mock_responses_file
 ```
 
-* `-e` or `--endpoint` specifies the host address and the port number of the endpoint; if this is not specified,
+* `-e` or `--endpoint` specifies the host address and the port number of the endpoint; if this is not specified, `0.0.0.0:8000` will be used.
 * `-f` or `--file` specifies the path of the JSON file which defines the mock responses
 
 For example,
