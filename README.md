@@ -71,7 +71,7 @@ The mock response object contains the following:
 
 ## Professional services
 
-If you need any supporting or consultancy services from YAM AI Machinery, please find us at:
+If you need any support or consultancy services from YAM AI Machinery, please find us at:
 
 * https://www.yam.ai
 * https://twitter.com/theYAMai
