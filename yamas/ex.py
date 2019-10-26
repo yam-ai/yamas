@@ -27,3 +27,6 @@ class RequestError(YamasException):
 
 class GeneratorError(YamasException):
     pass
+
+class ServerError(YamasException):
+    pass

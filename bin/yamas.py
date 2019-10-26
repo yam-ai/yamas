@@ -16,27 +16,13 @@
 
 import os
 import sys
-import re
 from getopt import getopt, GetoptError
 from http.server import HTTPServer, HTTPStatus
-from handler import make_handler_class
-from respgen import Method, ResponseGenerator, PatternResponseGenerator
-from ex import GeneratorError
+from yamas.server import Yamas
+from yamas.ex import YamasException
 
 DEFAULT_IP = '0.0.0.0'
 DEFAULT_PORT = 7777
-
-
-def run(ip: str, port: int, generator: PatternResponseGenerator):
-    print(f'HTTP server is starting on {ip}:{port}...')
-    server_address = (ip, port)
-    PatternRequestHandler = make_handler_class(
-        'PatternRequestHandler', generator)
-    httpd = HTTPServer(server_address, PatternRequestHandler)
-    print('HTTP server is running.')
-    httpd.serve_forever()
-    return
-
 
 def halt(progname: str, err: str, exit_code: int = 0):
     print(err, file=sys.stderr)
@@ -44,11 +30,6 @@ def halt(progname: str, err: str, exit_code: int = 0):
           file=sys.stderr)
     sys.exit(0)
     return
-
-
-def load_data(path):
-    with open(path, 'r') as f:
-        return f.read()
 
 
 if __name__ == '__main__':
@@ -69,18 +50,13 @@ if __name__ == '__main__':
         if k in ('-f', '--file'):
             path = v
     if not path:
-        halt(progname, 'The matcher file path must be given', 2)
-    try:
-        matcher_json = load_data(path)
-    except:
-        halt(progname, f'Failed to read matcher file {path}', 3)
-    try:
-        generator = PatternResponseGenerator()
-        generator.load_from_json(matcher_json)
-    except GeneratorError as e:
-        halt(progname, f'Invalid data in matcher file {path}: {e}', 4)
+        halt(progname, 'The mock responses file path must be given', 2)
 
     try:
-        run(ip, port, generator)
-    except OSError as e:
-        halt(progname, f'Failed to start server: {e}', 5)
+        server = Yamas()
+        server.load_data(path)
+        print(f'Loaded mock data file: {path}')
+        print(f'Starting server on {ip}:{port}')
+        server.run(ip, port)
+    except YamasException as e:
+        halt(progname, e, 3)

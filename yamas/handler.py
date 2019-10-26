@@ -16,15 +16,7 @@
 from typing import Callable
 from http.server import BaseHTTPRequestHandler
 from http import HTTPStatus
-from respgen import ResponseGenerator, Response, Request, Method
-
-
-def make_handler_class(name: str, respgen: ResponseGenerator) -> Callable:
-    handler_class = type(name, (MockRequestHandler,), {'respgen': respgen})
-    handler_class.server_version = 'Yamas - Yet another mock API server'
-    handler_class.sys_version = ''
-    return handler_class
-
+from yamas.respgen import ResponseGenerator, Response, Request, Method
 
 class MockRequestHandler(BaseHTTPRequestHandler):
 

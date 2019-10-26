@@ -20,7 +20,7 @@ from http import HTTPStatus
 from io import BufferedIOBase
 from enum import Enum
 from typing import Pattern
-from ex import GeneratorError, RequestError, ResponseError
+from yamas.ex import GeneratorError, RequestError, ResponseError
 
 
 class Method(Enum):
