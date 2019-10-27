@@ -13,17 +13,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-class HTTPMockException(Exception):
+class YamasException(Exception):
     pass
 
 
-class ResponseError(HTTPMockException):
+class ResponseError(YamasException):
     pass
 
 
-class RequestError(HTTPMockException):
+class RequestError(YamasException):
     pass
 
 
-class GeneratorError(HTTPMockException):
+class GeneratorError(YamasException):
+    pass
+
+class ServerError(YamasException):
     pass

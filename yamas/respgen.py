@@ -19,9 +19,8 @@ from json import loads, dumps
 from http import HTTPStatus
 from io import BufferedIOBase
 from enum import Enum
-from yamas.errs import RequestError, ResponseError
 from typing import Pattern
-from yamas.errs import GeneratorError
+from yamas.ex import GeneratorError, RequestError, ResponseError
 
 
 class Method(Enum):

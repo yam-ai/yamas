@@ -1,4 +1,4 @@
-# Yamas - yet another mock API server
+# Yamas - Yet Another Mock API Server
 
 This project develops a simple mock API server for prototyping and testing client applications.  
 
