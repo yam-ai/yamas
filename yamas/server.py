@@ -20,9 +20,7 @@ from yamas.respgen import Method, ResponseGenerator, PatternResponseGenerator
 from yamas.handler import MockRequestHandler
 from yamas.ex import GeneratorError, ServerError
 
-DEFAULT_IP = '0.0.0.0'
-DEFAULT_PORT = 7777
-SERVER_HEADER = 'Yamas'
+SERVER_HEADER = 'yamas'
 
 class Yamas:
 
