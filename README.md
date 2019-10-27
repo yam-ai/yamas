@@ -14,7 +14,7 @@ Yamas has been published on [PyPI](https://pypi.org). You can use `pip3` to inst
 pip3 install yamas
 ```
 
-The command-line interface of Yamas as follows:
+The command-line interface of Yamas is as follows:
 
 ```sh
 yamas [-e|--endpoint host:port] -f|--file mock_responses_file
