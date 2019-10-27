@@ -8,10 +8,16 @@ The mock responses and the rules of selecting them are specified in a JSON file.
 
 ## Usage
 
-Yamas provides a command-line interface as follows:
+Yamas has been published on [PyPI](https://pypi.org). You can use `pip3` to install Yamas:
 
 ```sh
-yamas.py [-e|--endpoint host:port] -f|--file mock_responses_file
+pip3 install yamas
+```
+
+The command-line interface of Yamas as follows:
+
+```sh
+yamas [-e|--endpoint host:port] -f|--file mock_responses_file
 ```
 
 * `-e` or `--endpoint` specifies the host address and the port number of the endpoint; if this is not specified, `0.0.0.0:7777` will be used.
