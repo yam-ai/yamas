@@ -35,8 +35,8 @@ class MockRequestHandler(BaseHTTPRequestHandler):
             for k, v in response.headers.items():
                 self.send_header(k, v)
         self.end_headers()
-        if response.body:
-            self.wfile.write(response.body)
+        if response.body_bytes:
+            self.wfile.write(response.body_bytes)
         return
 
     def do_GET(self):
@@ -45,4 +45,32 @@ class MockRequestHandler(BaseHTTPRequestHandler):
 
     def do_POST(self):
         self.respond(Method.POST, self.path, self.headers)
+        return
+
+    def do_PUT(self):
+        self.respond(Method.PUT, self.path, self.headers)
+        return
+
+    def do_DELETE(self):
+        self.respond(Method.DELETE, self.path, self.headers)
+        return
+
+    def do_HEAD(self):
+        self.respond(Method.HEAD, self.path, self.headers)
+        return
+
+    def do_PATCH(self):
+        self.respond(Method.PATCH, self.path, self.headers)
+        return
+
+    def do_OPTIONS(self):
+        self.respond(Method.OPTIONS, self.path, self.headers)
+        return
+
+    def do_TRACE(self):
+        self.respond(Method.TRACE, self.path, self.headers)
+        return
+
+    def do_CONNECT(self):
+        self.respond(Method.CONNECT, self.path, self.headers)
         return

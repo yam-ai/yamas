@@ -29,29 +29,41 @@ The mock responses and the rules of selecting them are specified in a JSON file,
 
 ```json
 {
-    "/users/\\w+/todo/\\d+": {
+    "^/users/(\\w+)/todo/(\\d+)$": {
         "GET": {
             "status": 200,
             "body": {
-                "id": 123,
+                "user": "{0}",
+                "taskid": "{1}",
                 "task": "Buy milk",
                 "pri": "low"
-            }
+            },
+            "interpolate": true
         },
-        "POST": {
-            "status": 201,
-            "body": {
-                "id": 123
-            }
+        "DELETE": {
+            "status": 410
         }
     },
-    "/users/\\w+/profile.xml": {
+    "^/users/\\w+/todo/?$": {
+        "POST": {
+            "taskid": 123
+        }
+    },
+    "^/users/(\\w+)/profile.xml$": {
         "GET": {
             "status": 200,
             "headers": {
                 "Content-Type": "application/xml"
             },
-            "body": "<profile><user>tomlee</user><name>Tom Lee</name><org>yam.ai</org><grade>premium</grade></profile>"
+            "body": "<profile><user>{0}</user><org>yam.ai</org><grade>premium</grade></profile>",
+            "interpolate": true
+        },
+        "PUT": {
+            "status": 409,
+            "headers": {
+                "Content-Type": "text/plain"
+            },
+            "body": "object already updated"
         }
     }
 }
@@ -61,13 +73,14 @@ The root level is a JSON object. Inside the root object, the keys are [Python re
 
 When the request path matches the regular expression, the associated JSON object which specifies the mock responses will be selected. When the request path does not match the regular expression, the regular expression in the next key will be selected. If the request path matches no regular expression, a [404 Not Found](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status) response will be replied.
 
-When the request path matches the regular expression in a key, the corresponding JSON object value will be used to construct the response. In such a JSON object, the keys are [HTTP methods](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods). The current version only supports `GET` and `POST`. The JSON object corresponding to a HTTP method key specifies a mock response.
+When the request path matches the regular expression in a key, the corresponding JSON object value will be used to construct the response. In such a JSON object, the keys are [HTTP methods](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods). The JSON object corresponding to a HTTP method key specifies a mock response.
 
 The mock response object contains the following:
 
 * `status` specifies the status code of the response. If `status` is not specified, `200 OK` will be used.
 * `headers` specifies a JSON object containing the header names and values. If there are no user-defined headers, `headers` can be omitted.
-* `body` specifies the body of the response. Its value can be either a string or a JSON object.If the value is a string, the response body will be in plain text. If the value is a JSON object, the response body will be the same JSON object; and the `Content-Type: application/json` header will be automatically added unless it is overrided by a different `Content-Type` header specified in the `headers` value.
+* `body` specifies the body of the response. Its value can be either a JSON object or a string. If the value is a JSON object, the response body will be the same JSON object; and the `Content-Type: application/json` header will be automatically added unless it is overrided by a different `Content-Type` header specified in the `headers` value. If the value is a string, the response body will be a [UTF-8](https://en.wikipedia.org/wiki/UTF-8) text.
+* `interpolate` specifies whether the values of the matched capturing groups will be inserted into the body string. When `interpolate` is `true`, every string value in `body` is expected to be a [Python format string](https://docs.python.org/3.6/library/string.html#format-string-syntax). If `body` is a string, the value is treated as a format string. If the `body` is a JSON object, every string value in the object is treated as a format string. In the first format string of the the above example, `{0}` will be substituted with the value of the first matched capturing group in the regular expression (i.e., `(\w+)`), `{1}` will be substituted with the value of the second matched capturing group (i.e., `(\d+)` ). Note the special character `\` in a regular expression needs to be escaped as `\\`. 
 
 ## Professional services
 
