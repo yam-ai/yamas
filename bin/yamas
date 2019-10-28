@@ -21,8 +21,8 @@ from http.server import HTTPServer, HTTPStatus
 from yamas.server import Yamas
 from yamas.ex import YamasException
 
-DEFAULT_IP = '0.0.0.0'
-DEFAULT_PORT = 7777
+DEFAULT_IP = '127.0.0.1'
+DEFAULT_PORT = 7000
 
 
 def halt(progname: str, err: str, exit_code: int = 0):
