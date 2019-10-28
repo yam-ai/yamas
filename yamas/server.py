@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 # coding=utf-8
 # Copyright 2019 YAM AI Machinery Limited
 #
@@ -21,6 +20,8 @@ from yamas.handler import MockRequestHandler
 from yamas.ex import GeneratorError, ServerError
 
 SERVER_HEADER = 'yamas'
+SYS_VERSION = '0.1'
+
 
 class Yamas:
 
@@ -28,7 +29,7 @@ class Yamas:
     def make_handler_class(name: str, respgen: ResponseGenerator) -> Callable:
         handler_class = type(name, (MockRequestHandler,), {'respgen': respgen})
         handler_class.server_version = SERVER_HEADER
-        handler_class.sys_version = '0.1'
+        handler_class.sys_version = SYS_VERSION
         return handler_class
 
     def __init__(self):
@@ -44,7 +45,6 @@ class Yamas:
             raise ServerError(e)
         return
 
-
     def run(self, ip: str, port: int):
         server_address = (ip, port)
         PatternRequestHandler = self.make_handler_class(
@@ -55,4 +55,3 @@ class Yamas:
         except Exception as e:
             raise ServerError(e)
         return
-
