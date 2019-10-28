@@ -16,7 +16,9 @@
 from typing import Callable
 from http.server import BaseHTTPRequestHandler
 from http import HTTPStatus
-from yamas.respgen import ResponseGenerator, Response, Request, Method
+from yamas.respgen import ResponseGenerator
+from yamas.reqresp import Response, Request, Method
+
 
 class MockRequestHandler(BaseHTTPRequestHandler):
 
