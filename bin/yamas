@@ -24,6 +24,7 @@ from yamas.ex import YamasException
 DEFAULT_IP = '0.0.0.0'
 DEFAULT_PORT = 7777
 
+
 def halt(progname: str, err: str, exit_code: int = 0):
     print(err, file=sys.stderr)
     print(f'Usage: {progname} [-e|--endpoint server_address:port] -f|--file mock_responses_file',
@@ -50,7 +51,7 @@ if __name__ == '__main__':
         if k in ('-f', '--file'):
             path = v
     if not path:
-        halt(progname, 'The mock responses file path must be given', 2)
+        halt(progname, 'The mock response data file path must be given', 2)
 
     try:
         server = Yamas()
