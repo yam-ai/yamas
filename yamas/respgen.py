@@ -25,10 +25,10 @@ from yamas.ex import GeneratorError, RequestError, ResponseError
 class ResponseMaker:
     def __init__(self, status: HTTPStatus, headers: dict, body: any, interpolate: bool):
         self.status = status
-        self.interpolate = interpolate
         self.headers = headers
         self.body_bytes = None
         self.template = None
+        self.interpolate = interpolate
         if not body:
             if self.interpolate:
                 self.template = ''
@@ -63,7 +63,7 @@ class ResponseMaker:
                 raise ResponseError('Failed to encode dict into JSON')
 
     def make_body_bytes(self, body: bytes):
-        if interpolate:
+        if self.interpolate:
             raise ResponseError('Bytes-type body does not interpolation')
         self.body_bytes = body
 
