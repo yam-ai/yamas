@@ -24,7 +24,7 @@ with open(path.join(this_directory, 'README.md'), encoding='utf-8') as f:
 
 setup(
     name='yamas',
-    version='0.1.2',
+    version='0.1.3',
     description='Yamas - Yet Another Mock API Server',
     long_description=long_description,
     long_description_content_type='text/markdown',
@@ -42,5 +42,5 @@ setup(
     include_page_data=True,
     zip_safe=True,
     scripts=['bin/yamas'],
-    packages=find_packages(),
+    packages=find_packages(exclude=['tests']),
 )

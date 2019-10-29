@@ -17,7 +17,7 @@ from enum import Enum
 from io import BufferedIOBase
 from http import HTTPStatus
 from collections import OrderedDict
-from json import loads
+from json import load
 from yamas.ex import RequestError
 
 
@@ -34,21 +34,24 @@ class Method(Enum):
 
 
 class Request:
-    def __init__(self, path: str, method: Method, headers: dict, body: BufferedIOBase):
+    def __init__(self, path: str, method: Method, headers: dict, body_io: BufferedIOBase):
         self.path = path
         self.method = method
         self.headers = headers
-        self.body = body
+        self.body_io = body_io
+
+    def body_bytes(self) -> bytes:
+        return self.body_io.read()
 
     def body_utf8(self) -> str:
         try:
-            return self.body.read()
+            return self.body_bytes().decode('utf-8')
         except Exception as e:
             raise RequestError(e)
 
     def body_json(self) -> str:
         try:
-            return loads(self.body_utf8, object_pairs_hook=OrderedDict)
+            return load(self.body_io, object_pairs_hook=OrderedDict)
         except Exception as e:
             raise RequestError(e)
 
