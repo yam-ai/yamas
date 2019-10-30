@@ -71,141 +71,145 @@ class TestPatternResponseGenerator(TestCase):
         }
         self.mock_json_norm = dumps(self.mock_dict_norm)
 
-    def test_patrespgen_load_from_dict(self):
-        patrespgen = PatternResponseGenerator()
-        patrespgen.load_from_dict(self.mock_dict_norm)
-        tests = [
-            {
-                'input': {
-                    'path': '/users/tomlee/todo/123',
-                    'method': Method.GET,
-                    'headers': {'a': 1},
-                    'body_io': BytesIO(b'Hello World')
-                },
-                'expected': {
-                    'status': 200,
-                    'headers': {
-                        'Content-Type': 'application/json'
+    def test_patrespgen_load_norm(self):
+        g0 = PatternResponseGenerator()
+        g0.load_from_dict(self.mock_dict_norm)
+        g1 = PatternResponseGenerator()
+        g1.load_from_json(self.mock_json_norm)
+        gens = [g0, g1]
+        for g in gens:
+            tests = [
+                {
+                    'input': {
+                        'path': '/users/tomlee/todo/123',
+                        'method': Method.GET,
+                        'headers': {'a': 1},
+                        'body_io': BytesIO(b'Hello World')
                     },
-                    'body_bytes': dumps({
-                        'user': 'tomlee',
-                        'taskid': '123',
-                        'task': 'Buy milk',
-                        'pri': 'low'
-                    }).encode('utf-8'),
-                }
-            },
-            {
-                'input': {
-                    'path': '/users/tomlee/todo/123',
-                    'method': Method.DELETE,
-                    'headers': {'a': 1},
-                    'body_io': BytesIO(b'Hello World')
+                    'expected': {
+                        'status': 200,
+                        'headers': {
+                            'Content-Type': 'application/json'
+                        },
+                        'body_bytes': dumps({
+                            'user': 'tomlee',
+                            'taskid': '123',
+                            'task': 'Buy milk',
+                            'pri': 'low'
+                        }).encode('utf-8'),
+                    }
                 },
-                'expected': {
-                    'status': 410,
-                    'headers': {},
-                    'body_bytes': b'',
-                }
-            },
-            {
-                'input': {
-                    'path': '/users/tomlee/todo/',
-                    'method': Method.GET,
-                    'headers': {'a': 1},
-                    'body_io': BytesIO(b'Hello World')
-                },
-                'expected': {
-                    'status': 200,
-                    'headers': {
-                        'Content-Type': 'application/json'
+                {
+                    'input': {
+                        'path': '/users/tomlee/todo/123',
+                        'method': Method.DELETE,
+                        'headers': {'a': 1},
+                        'body_io': BytesIO(b'Hello World')
                     },
-                    'body_bytes': dumps([
-                        '123', '456', '789'
-                    ]).encode('utf-8'),
-                }
-            },
-            {
-                'input': {
-                    'path': '/users/tomlee/todo/',
-                    'method': Method.POST,
-                    'headers': {'a': 1},
-                    'body_io': BytesIO(b'Hello World')
+                    'expected': {
+                        'status': 410,
+                        'headers': {},
+                        'body_bytes': b'',
+                    }
                 },
-                'expected': {
-                    'status': 200,
-                    'headers': {'Content-Type': 'application/json'},
-                    'body_bytes': dumps({
-                        'taskid': 123
-                    }).encode('utf-8'),
-                }
-            },
-            {
-                'input': {
-                    'path': '/users/tomlee/profile.xml',
-                    'method': Method.GET,
-                    'headers': {
-                        'Content-Type': 'application/xml'
+                {
+                    'input': {
+                        'path': '/users/tomlee/todo/',
+                        'method': Method.GET,
+                        'headers': {'a': 1},
+                        'body_io': BytesIO(b'Hello World')
                     },
-                    'body_io': BytesIO(b'Hello World')
+                    'expected': {
+                        'status': 200,
+                        'headers': {
+                            'Content-Type': 'application/json'
+                        },
+                        'body_bytes': dumps([
+                            '123', '456', '789'
+                        ]).encode('utf-8'),
+                    }
                 },
-                'expected': {
-                    'status': 200,
-                    'headers': {'Content-Type': 'application/xml'},
-                    'body_bytes': b'<profile><user>tomlee</user><org>yam.ai</org><grade>premium</grade></profile>'
-                }
-            },
-            {
-                'input': {
-                    'path': '/users/tomlee/profile.xml',
-                    'method': Method.PUT,
-                    'headers': {
-                        'Content-Type': 'xml/plain'
+                {
+                    'input': {
+                        'path': '/users/tomlee/todo/',
+                        'method': Method.POST,
+                        'headers': {'a': 1},
+                        'body_io': BytesIO(b'Hello World')
                     },
-                    'body_io': BytesIO(b'Hello World')
+                    'expected': {
+                        'status': 200,
+                        'headers': {'Content-Type': 'application/json'},
+                        'body_bytes': dumps({
+                            'taskid': 123
+                        }).encode('utf-8'),
+                    }
                 },
-                'expected': {
-                    'status': 409,
-                    'headers': {'Content-Type': 'text/plain'},
-                    'body_bytes': b'object already updated'
-                }
-            },
-            {
-                'input': {
-                    'path': '/users/tomlee/todo/abc',
-                    'method': Method.GET,
-                    'headers': {},
-                    'body_io': BytesIO(b'Hello World')
+                {
+                    'input': {
+                        'path': '/users/tomlee/profile.xml',
+                        'method': Method.GET,
+                        'headers': {
+                            'Content-Type': 'application/xml'
+                        },
+                        'body_io': BytesIO(b'Hello World')
+                    },
+                    'expected': {
+                        'status': 200,
+                        'headers': {'Content-Type': 'application/xml'},
+                        'body_bytes': b'<profile><user>tomlee</user><org>yam.ai</org><grade>premium</grade></profile>'
+                    }
                 },
-                'expected': {
-                    'status': 404,
-                    'headers': {},
-                    'body_bytes': b''
-                }
-            },
-            {
-                'input': {
-                    'path': '/users/tomlee/todo/123',
-                    'method': Method.POST,
-                    'headers': {},
-                    'body_io': BytesIO(b'Hello World')
+                {
+                    'input': {
+                        'path': '/users/tomlee/profile.xml',
+                        'method': Method.PUT,
+                        'headers': {
+                            'Content-Type': 'xml/plain'
+                        },
+                        'body_io': BytesIO(b'Hello World')
+                    },
+                    'expected': {
+                        'status': 409,
+                        'headers': {'Content-Type': 'text/plain'},
+                        'body_bytes': b'object already updated'
+                    }
                 },
-                'expected': {
-                    'status': 404,
-                    'headers': {},
-                    'body_bytes': b''
+                {
+                    'input': {
+                        'path': '/users/tomlee/todo/abc',
+                        'method': Method.GET,
+                        'headers': {},
+                        'body_io': BytesIO(b'Hello World')
+                    },
+                    'expected': {
+                        'status': 404,
+                        'headers': {},
+                        'body_bytes': b''
+                    }
+                },
+                {
+                    'input': {
+                        'path': '/users/tomlee/todo/123',
+                        'method': Method.POST,
+                        'headers': {},
+                        'body_io': BytesIO(b'Hello World')
+                    },
+                    'expected': {
+                        'status': 404,
+                        'headers': {},
+                        'body_bytes': b''
+                    }
                 }
-            }
-        ]
-        for t in tests:
-            resp = patrespgen.respond(
-                Request(
-                    t['input']['path'],
-                    t['input']['method'],
-                    t['input'].get('headers'),
-                    t['input']['headers'],
+            ]
+            for t in tests:
+                resp = g.respond(
+                    Request(
+                        t['input']['path'],
+                        t['input']['method'],
+                        t['input'].get('headers'),
+                        t['input']['headers'],
+                    )
                 )
-            )
-            self.assertEqual(resp.status, t['expected']['status'])
-            self.assertEqual(resp.headers, t['expected']['headers'])
-            self.assertEqual(resp.body_bytes, t['expected']['body_bytes'])
+                self.assertEqual(resp.status, t['expected']['status'])
+                self.assertEqual(resp.headers, t['expected']['headers'])
+                self.assertEqual(resp.body_bytes, t['expected']['body_bytes'])
