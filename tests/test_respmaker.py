@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import unittest
+from unittest import TestCase
 import io
 import sys
 from collections import OrderedDict
@@ -24,7 +24,7 @@ from yamas.ex import ResponseError
 from copy import deepcopy
 
 
-class TestReponseMaker(unittest.TestCase):
+class TestReponseMaker(TestCase):
     def setUp(self):
         self.headers = {'a': 1, 'b': 2}
         self.body_dict = {'x': '{0}', 'y': '{1}'}

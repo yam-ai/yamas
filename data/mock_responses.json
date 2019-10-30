@@ -11,12 +11,23 @@
             "interpolate": true
         },
         "DELETE": {
-            "status": 410
+            "status": 410,
+            "interpolate": false
         }
     },
-    "^/users/\\w+/todo/?$": {
+    "^/users/\\w+/todo/?": {
+        "GET": {
+            "status": 200,
+            "body": [
+                "123",
+                "456",
+                "789"
+            ]
+        },
         "POST": {
-            "taskid": 123
+            "body": {
+                "taskid": 123
+            }
         }
     },
     "^/users/(\\w+)/profile.xml$": {

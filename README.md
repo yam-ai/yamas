@@ -47,12 +47,15 @@ The mock responses and the rules of selecting them are specified in a JSON file,
             "interpolate": true
         },
         "DELETE": {
-            "status": 410
+            "status": 410,
+            "interpolate": false
         }
     },
     "^/users/\\w+/todo/?$": {
         "POST": {
-            "taskid": 123
+            "body": {
+                "taskid": 123
+            }
         }
     },
     "^/users/(\\w+)/profile.xml$": {

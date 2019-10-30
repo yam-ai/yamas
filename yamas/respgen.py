@@ -26,22 +26,22 @@ class ResponseMaker:
     def __init__(self, status: HTTPStatus, headers: dict, body: any, interpolate: bool):
         self.status = status
         self.headers = headers
+        self.headers = headers if headers is not None else dict()
         self.body_bytes = None
         self.template = None
         self.interpolate = interpolate
         if not body:
             if self.interpolate:
                 self.template = ''
+                self.body_bytes = b''
             else:
-                self.body_types = b''
+                self.body_bytes = b''
         elif isinstance(body, str):
             self.make_body_str(body)
-        elif isinstance(body, dict):
+        elif isinstance(body, dict) or isinstance(body, list):
             self.make_body_dict(body)
-            if not headers:
-                headers = dict()
-            if not headers.get('Content-Type'):
-                headers['Content-Type'] = 'application/json'
+            if not self.headers.get('Content-Type'):
+                self.headers['Content-Type'] = 'application/json'
         elif isinstance(body, bytes):
             self.make_body_bytes(body)
         return
@@ -94,7 +94,9 @@ class ResponseMaker:
             else:
                 body_bytes = dumps(formatted_body).encode('utf-8')
         except Exception as e:
-            return Response(HTTPStatus.INTERNAL_SERVER_ERROR, {'Content-Type': 'text/plain'}, str(e).encode('utf-8'))
+            return Response(HTTPStatus.INTERNAL_SERVER_ERROR,
+                            {'Content-Type': 'text/plain'},
+                            str(e).encode('utf-8'))
         return Response(self.status, self.headers, body_bytes)
 
 
@@ -114,9 +116,9 @@ class ResponseSelector:
         self.response_makers.append(response_maker)
         return
 
-    def select_response_maker(self, groups):
+    def make_response(self, groups):
         if not self.response_makers:
-            return None
+            return Response(HTTPStatus.NOT_FOUND, {}, b'')
         num_response_makers = len(self.response_makers)
         if self.idx >= num_response_makers:
             self.idx == 0
@@ -196,9 +198,10 @@ class PatternResponseGenerator(ResponseGenerator):
         for cpat, respsel_dict in self.matchers.items():
             match = cpat.fullmatch(request.path)
             if match:
-                respsel = respsel_dict[request.method]
+                respsel = respsel_dict.get(request.method)
                 if respsel:
-                    return respsel.select_response_maker(match.groups())
+                    resp = respsel.make_response(match.groups())
+                    return resp
                 else:
                     break
         return Response(HTTPStatus.NOT_FOUND, {}, None)

@@ -13,16 +13,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import unittest
-# import io
-# import sys
+from unittest import TestCase
 from http import HTTPStatus
-from collections import OrderedDict
 from yamas.respgen import ResponseMaker, ResponseSelector
-from copy import deepcopy
 
 
-class TestReponseSelector(unittest.TestCase):
+class TestReponseSelector(TestCase):
     def setUp(self):
         self.respsel = ResponseSelector(loop=False)
         self.respsel_loop = ResponseSelector(loop=True)
@@ -37,10 +33,10 @@ class TestReponseSelector(unittest.TestCase):
             self.respsel_loop.add_response_maker(rm)
         for i in range(5):
             self.assertEqual(
-                self.respsel.select_response_maker(
+                self.respsel.make_response(
                     tuple()).body_bytes.decode('utf-8'),
                 str(min(i, 2)))
             self.assertEqual(
-                self.respsel_loop.select_response_maker(
+                self.respsel_loop.make_response(
                     tuple()).body_bytes.decode('utf-8'),
                 str(i % 3))

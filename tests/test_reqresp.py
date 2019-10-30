@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import unittest
+from unittest import TestCase
 import io
 from collections import OrderedDict
 from json import dumps
@@ -21,7 +21,7 @@ from yamas.reqresp import Request, Method, Response
 from http import HTTPStatus
 
 
-class TestRequest(unittest.TestCase):
+class TestRequest(TestCase):
 
     def setUp(self):
         self.path = '/p1/p2'
@@ -49,7 +49,7 @@ class TestRequest(unittest.TestCase):
         self.assertEqual(self.req.body_json(), self.body_dict)
 
 
-class TestResponse(unittest.TestCase):
+class TestResponse(TestCase):
     def setUp(self):
         self.status = HTTPStatus.OK
         self.headers = {'a': 1, 'b': 2}
