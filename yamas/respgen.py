@@ -204,4 +204,4 @@ class PatternResponseGenerator(ResponseGenerator):
                     return resp
                 else:
                     break
-        return Response(HTTPStatus.NOT_FOUND, {}, None)
+        return Response(HTTPStatus.NOT_FOUND, {}, b'')
