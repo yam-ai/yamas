@@ -16,6 +16,7 @@
 from unittest import TestCase
 from http import HTTPStatus
 from yamas.respgen import ResponseMaker, ResponseSelector
+from yamas.reqresp import ContentType
 
 
 class TestReponseSelector(TestCase):
@@ -23,7 +24,7 @@ class TestReponseSelector(TestCase):
         self.respsel = ResponseSelector(loop=False)
         self.respsel_loop = ResponseSelector(loop=True)
         self.respmakers = [
-            ResponseMaker(HTTPStatus.OK, {}, str(i), False)
+            ResponseMaker(HTTPStatus.OK, {}, str(i), ContentType.TEXT, False)
             for i in range(3)
         ]
 
@@ -34,9 +35,9 @@ class TestReponseSelector(TestCase):
         for i in range(5):
             self.assertEqual(
                 self.respsel.make_response(
-                    tuple()).body_bytes.decode('utf-8'),
+                    tuple()).content_bytes.decode('utf-8'),
                 str(min(i, 2)))
             self.assertEqual(
                 self.respsel_loop.make_response(
-                    tuple()).body_bytes.decode('utf-8'),
+                    tuple()).content_bytes.decode('utf-8'),
                 str(i % 3))

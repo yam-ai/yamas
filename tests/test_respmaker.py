@@ -20,6 +20,7 @@ from collections import OrderedDict
 from json import dumps
 from http import HTTPStatus
 from yamas.respgen import ResponseMaker
+from yamas.reqresp import ContentType
 from yamas.ex import ResponseError
 from copy import deepcopy
 
@@ -27,23 +28,29 @@ from copy import deepcopy
 class TestReponseMaker(TestCase):
     def setUp(self):
         self.headers = {'a': 1, 'b': 2}
-        self.body_dict = {'x': '{0}', 'y': '{1}'}
-        self.body_str = '{"x": "{0}", "y": "{1}"}'
-        self.body_bytes = self.body_str.encode('utf-8')
-        self.headers_with_content_type = deepcopy(self.headers)
-        self.headers_with_content_type['Content-Type'] = 'application/json'
+        self.content_dict = {'x': '{0}', 'y': '{1}'}
+        self.content_str = '{"x": "{0}", "y": "{1}"}'
+        self.content_bytes = self.content_str.encode('utf-8')
+        self.headers_with_json_type = deepcopy(self.headers)
+        self.headers_with_json_type['Content-Type'] = 'application/json'
+        self.headers_with_text_type = deepcopy(self.headers)
+        self.headers_with_text_type['Content-Type'] = 'text/plain'
+        self.headers_with_empty_type = deepcopy(self.headers)
+        self.headers_with_empty_type['Content-Type'] = ''
         self.tests = [
             {
                 'input': {
                     'status': HTTPStatus.OK,
                     'headers': deepcopy(self.headers),
-                    'body': self.body_str,
+                    'content': self.content_str,
+                    'content_type': ContentType.TEXT,
                     'interpolate': False
                 },
                 'expect': {
                     'status': HTTPStatus.OK,
-                    'headers': self.headers,
-                    'body_bytes': self.body_str.encode('utf-8'),
+                    'headers': self.headers_with_text_type,
+                    'content_bytes': self.content_str.encode('utf-8'),
+                    'content_type': ContentType.TEXT,
                     'template': None,
                     'interpolate': False
                 }
@@ -52,13 +59,15 @@ class TestReponseMaker(TestCase):
                 'input': {
                     'status': HTTPStatus.OK,
                     'headers': deepcopy(self.headers),
-                    'body': deepcopy(self.body_dict),
+                    'content': deepcopy(self.content_dict),
+                    'content_type': ContentType.JSON,
                     'interpolate': False
                 },
                 'expect': {
                     'status': HTTPStatus.OK,
-                    'headers': self.headers_with_content_type,
-                    'body_bytes': self.body_str.encode('utf-8'),
+                    'headers': self.headers_with_json_type,
+                    'content_bytes': self.content_str.encode('utf-8'),
+                    'content_type': ContentType.JSON,
                     'template': None,
                     'interpolate': False
                 }
@@ -67,29 +76,16 @@ class TestReponseMaker(TestCase):
                 'input': {
                     'status': HTTPStatus.OK,
                     'headers': deepcopy(self.headers),
-                    'body': deepcopy(self.body_bytes),
-                    'interpolate': False
-                },
-                'expect': {
-                    'status': HTTPStatus.OK,
-                    'headers': self.headers,
-                    'body_bytes': self.body_str.encode('utf-8'),
-                    'template': None,
-                    'interpolate': False
-                }
-            },
-            {
-                'input': {
-                    'status': HTTPStatus.OK,
-                    'headers': deepcopy(self.headers),
-                    'body': self.body_str,
+                    'content': self.content_str,
+                    'content_type': ContentType.TEXT,
                     'interpolate': True
                 },
                 'expect': {
                     'status': HTTPStatus.OK,
-                    'headers': self.headers,
-                    'body_bytes': None,
-                    'template': self.body_str,
+                    'headers': self.headers_with_text_type,
+                    'content_bytes': None,
+                    'content_type': ContentType.TEXT,
+                    'template': self.content_str,
                     'interpolate': True
                 }
             },
@@ -97,14 +93,16 @@ class TestReponseMaker(TestCase):
                 'input': {
                     'status': HTTPStatus.OK,
                     'headers': deepcopy(self.headers),
-                    'body': deepcopy(self.body_dict),
+                    'content': deepcopy(self.content_dict),
+                    'content_type': ContentType.JSON,
                     'interpolate': True
                 },
                 'expect': {
                     'status': HTTPStatus.OK,
-                    'headers': self.headers_with_content_type,
-                    'body_bytes': None,
-                    'template': self.body_dict,
+                    'headers': self.headers_with_json_type,
+                    'content_bytes': None,
+                    'content_type': ContentType.JSON,
+                    'template': self.content_dict,
                     'interpolate': True
                 }
             },
@@ -112,11 +110,19 @@ class TestReponseMaker(TestCase):
                 'input': {
                     'status': HTTPStatus.OK,
                     'headers': deepcopy(self.headers),
-                    'body': deepcopy(self.body_bytes),
+                    'content': deepcopy(self.content_dict),
+                    'content_type': ContentType.JSON,
                     'interpolate': True
                 },
-                'raises': ResponseError
-            },
+                'expect': {
+                    'status': HTTPStatus.OK,
+                    'headers': self.headers_with_json_type,
+                    'content_bytes': None,
+                    'content_type': ContentType.JSON,
+                    'template': self.content_dict,
+                    'interpolate': True
+                }
+            }
         ]
 
     def test_members(self):
@@ -129,6 +135,7 @@ class TestReponseMaker(TestCase):
                 rm = ResponseMaker(**t['input'])
                 self.assertEqual(rm.status, t['expect']['status'])
                 self.assertDictEqual(rm.headers, t['expect']['headers'])
-                self.assertEqual(rm.body_bytes, t['expect']['body_bytes'])
+                self.assertEqual(rm.content_bytes, t['expect']['content_bytes'])
+                self.assertEqual(rm.content_type, t['expect']['content_type'])
                 self.assertEqual(rm.template, t['expect']['template'])
                 self.assertEqual(rm.interpolate, t['expect']['interpolate'])

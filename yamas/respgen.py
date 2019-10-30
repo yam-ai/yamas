@@ -18,86 +18,96 @@ from collections import OrderedDict
 from json import loads, dumps
 from http import HTTPStatus
 from typing import Pattern
-from yamas.reqresp import Request, Response, Method
+from yamas.reqresp import Request, Response, Method, ContentType
 from yamas.ex import GeneratorError, RequestError, ResponseError
 
 
 class ResponseMaker:
-    def __init__(self, status: HTTPStatus, headers: dict, body: any, interpolate: bool):
+    def __init__(self, status: HTTPStatus, headers: dict, content: any, content_type: ContentType, interpolate: bool):
         self.status = status
+        self.content_type = content_type
         self.headers = headers
         self.headers = headers if headers is not None else dict()
-        self.body_bytes = None
+        self.content_bytes = None
         self.template = None
         self.interpolate = interpolate
-        if not body:
-            if self.interpolate:
-                self.template = ''
-                self.body_bytes = b''
-            else:
-                self.body_bytes = b''
-        elif isinstance(body, str):
-            self.make_body_str(body)
-        elif isinstance(body, dict) or isinstance(body, list):
-            self.make_body_dict(body)
-            if not self.headers.get('Content-Type'):
-                self.headers['Content-Type'] = 'application/json'
-        elif isinstance(body, bytes):
-            self.make_body_bytes(body)
+        
+        if self.content_type is ContentType.JSON:
+            self.make_content_dict(content)
+        elif content is None or isinstance(content, str):
+            self.make_content_str(content, content_type)
+        elif content is not None:
+            raise ResponseError('Content must be a string when the content type is text or not given')
         return
 
-    def make_body_str(self, body: str):
+    def make_content_str(self, content: str, content_type: ContentType):
+        if content is None: content = ''
+        if content == '':
+            self.interpolate = False
+        elif not isinstance('content', str):
+            raise ResponseError('Text content must be given as a string.')
         if self.interpolate:
-            self.template = body
+            self.template = content
         else:
-            self.body_bytes = body.encode('utf-8')
+            self.content_bytes = content.encode('utf-8')
+        content_type_header = self.headers.get('Content-Type')
+        if content_type is ContentType.TEXT:
+            if content_type_header is None or content_type_header != '':
+                self.headers['Content-Type'] = 'text/plain'            
+            elif content_type_header == '':
+                del self.headers['Content-Type']
+        return
 
-    def make_body_dict(self, body: dict):
+    def make_content_dict(self, content: dict):
+        if not content:
+            self.interpolate = False
+            self.content_bytes = b''     
         if self.interpolate:
-            self.template = body
+            self.template = content
         else:
             try:
-                json_str = dumps(body)
-                self.body_bytes = json_str.encode('utf-8')
-            except Exception:
-                raise ResponseError('Failed to encode dict into JSON')
-
-    def make_body_bytes(self, body: bytes):
-        if self.interpolate:
-            raise ResponseError('Bytes-type body does not interpolation')
-        self.body_bytes = body
+                json_str = dumps(content)
+                self.content_bytes = json_str.encode('utf-8')
+            except Exception as e:
+                raise ResponseError(f'Failed to encode dict into JSON {e}')
+        content_type_header = self.headers.get('Content-Type') 
+        if content_type_header is None or content_type_header != '':
+            self.headers['Content-Type'] = 'application/json'  
+        if content_type_header == '':
+            del self.headers['Content-Type']
+        return
 
     @staticmethod
-    def format_body_template(template_item: any, vars: tuple) -> any:
+    def format_content_template(template_item: any, vars: tuple) -> any:
         if isinstance(template_item, str):
             return template_item.format(*vars)
         if isinstance(template_item, dict):
-            body_dict = OrderedDict()
+            content_dict = OrderedDict()
             for k, v in template_item.items():
-                body_dict[k] = ResponseMaker.format_body_template(v, vars)
-            return body_dict
+                content_dict[k] = ResponseMaker.format_content_template(v, vars)
+            return content_dict
         if isinstance(template_item, list):
-            body_list = []
-            for v in body_list:
-                body_list.append(ResponseMaker.format_body_template(v, vars))
-            return body_list
+            content_list = []
+            for v in content_list:
+                content_list.append(ResponseMaker.format_content_template(v, vars))
+            return content_list
         return template_item
 
     def make_response(self, groups: tuple) -> Response:
         if not self.interpolate:
-            return Response(self.status, self.headers, self.body_bytes)
+            return Response(self.status, self.headers, self.content_bytes)
         try:
-            formatted_body = ResponseMaker.format_body_template(
+            formatted_content = ResponseMaker.format_content_template(
                 self.template, groups)
-            if isinstance(formatted_body, str):
-                body_bytes = formatted_body.encode('utf-8')
+            if self.content_type is ContentType.JSON:
+                content_bytes = dumps(formatted_content).encode('utf-8')
             else:
-                body_bytes = dumps(formatted_body).encode('utf-8')
+                content_bytes = formatted_content.encode('utf-8')
         except Exception as e:
             return Response(HTTPStatus.INTERNAL_SERVER_ERROR,
                             {'Content-Type': 'text/plain'},
                             str(e).encode('utf-8'))
-        return Response(self.status, self.headers, body_bytes)
+        return Response(self.status, self.headers, content_bytes)
 
 
 class ResponseGenerator:
@@ -129,15 +139,17 @@ class ResponseSelector:
             self.idx = min(self.idx + 1, num_response_makers - 1)
         return response_maker.make_response(groups)
 
+class MockResponse:
+    def __init__(self, status: HTTPStatus, headers: dict, content: any, content_type: ContentType, interpolate: bool):
+        self.status = status
+        self.headers = headers
+        self.content = content
+        self.content_type = content_type
+        self.interpolate = interpolate
 
 class PatternResponseGenerator(ResponseGenerator):
 
-    class MockResponse:
-        def __init__(self, status: HTTPStatus, headers: dict, body: any, interpolate: bool):
-            self.status = status
-            self.headers = headers
-            self.body = body
-            self.interpolate = interpolate
+
 
     def __init__(self):
         self.matchers = OrderedDict()
@@ -158,22 +170,29 @@ class PatternResponseGenerator(ResponseGenerator):
                 self.add_matcher(cpat, method, mock_response)
         return
 
-    @classmethod
-    def parse_mock_response(cls, resp: dict) -> MockResponse:
+    @staticmethod
+    def parse_mock_response(resp: dict) -> MockResponse:
         status_code = resp['status'] if 'status' in resp else 200
         try:
             status = HTTPStatus(status_code)
         except:
             raise GeneratorError(f'Unrecognized status code {status_code}')
         headers = resp.get('headers')
-        body = resp.get('body')
+        content = resp.get('content')
         interpolate = resp.get('interpolate')
+        content_type_str = resp.get('contentType')
+        if content_type_str:
+            try:
+                content_type = ContentType(content_type_str)
+            except Exception:
+                raise GeneratorError(f'Unsupported contenntType {content_type_str}')
+        else: content_type = None
         if interpolate is None:
             interpolate = False
         elif not isinstance(interpolate, bool):
             raise GeneratorError(
                 f'The interpolate field must be boolean')
-        return cls.MockResponse(status, headers, body, interpolate)
+        return MockResponse(status, headers, content, content_type, interpolate)
 
     def load_from_json(self, matcher_json: str):
         try:
@@ -192,7 +211,7 @@ class PatternResponseGenerator(ResponseGenerator):
             self.matchers[pattern] = respsel_dict
         respsel_dict[method].add_response_maker(
             ResponseMaker(mock_response.status, mock_response.headers,
-                          mock_response.body, mock_response.interpolate))
+                          mock_response.content, mock_response.content_type, mock_response.interpolate))
 
     def respond(self, request: Request) -> Response:
         for cpat, respsel_dict in self.matchers.items():

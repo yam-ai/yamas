@@ -27,36 +27,36 @@ class TestRequest(TestCase):
         self.path = '/p1/p2'
         self.method = Method('GET')
         self.headers = {'a': 1, 'b': 2}
-        self.body_dict = OrderedDict()
-        self.body_dict['x'] = 1
-        self.body_dict['y'] = 2
-        self.body_str = dumps(self.body_dict)
-        self.body_io = io.BytesIO(self.body_str.encode('utf-8'))
-        self.req = Request(self.path, self.method, self.headers, self.body_io)
+        self.content_dict = OrderedDict()
+        self.content_dict['x'] = 1
+        self.content_dict['y'] = 2
+        self.content_str = dumps(self.content_dict)
+        self.content_io = io.BytesIO(self.content_str.encode('utf-8'))
+        self.req = Request(self.path, self.method, self.headers, self.content_io)
 
     def test_members(self):
         self.assertEqual(self.req.path, self.path)
         self.assertEqual(self.req.method, self.method)
         self.assertEqual(self.req.headers, self.headers)
 
-    def test_body_bytes(self):
-        self.assertEqual(self.req.body_bytes(), self.body_str.encode('utf-8'))
+    def test_content_bytes(self):
+        self.assertEqual(self.req.content_bytes(), self.content_str.encode('utf-8'))
 
-    def test_body_utf8(self):
-        self.assertEqual(self.req.body_utf8(), self.body_str)
+    def test_content_utf8(self):
+        self.assertEqual(self.req.content_utf8(), self.content_str)
 
-    def test_body_json(self):
-        self.assertEqual(self.req.body_json(), self.body_dict)
+    def test_content_json(self):
+        self.assertEqual(self.req.content_json(), self.content_dict)
 
 
 class TestResponse(TestCase):
     def setUp(self):
         self.status = HTTPStatus.OK
         self.headers = {'a': 1, 'b': 2}
-        self.body_bytes = b'abc'
+        self.content_bytes = b'abc'
 
     def test_members(self):
-        resp = Response(HTTPStatus.OK, self.headers, self.body_bytes)
+        resp = Response(HTTPStatus.OK, self.headers, self.content_bytes)
         self.assertEqual(resp.status, self.status)
         self.assertEqual(resp.headers, self.headers)
-        self.assertEqual(resp.body_bytes, self.body_bytes)
+        self.assertEqual(resp.content_bytes, self.content_bytes)

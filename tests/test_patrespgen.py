@@ -27,12 +27,13 @@ class TestPatternResponseGenerator(TestCase):
             '^/users/(\\w+)/todo/(\\d+)$': {
                 'GET': {
                     'status': 200,
-                    'body': {
+                    'content': {
                         'user': '{0}',
                         'taskid': '{1}',
                         'task': 'Buy milk',
                         'pri': 'low'
                     },
+                    'contentType': 'json',
                     'interpolate': True
                 },
                 'DELETE': {
@@ -42,12 +43,14 @@ class TestPatternResponseGenerator(TestCase):
             '^/users/\\w+/todo/?$': {
                 'GET': {
                     'status': 200,
-                    'body': ["123", "456", "789"]
+                    'content': ["123", "456", "789"],
+                    'contentType': 'json'
                 },
                 'POST': {
-                    'body': {
-                        'taskid': 123
+                    'content': {
+                        'taskid': "123"
                     },
+                    'contentType': 'json',
                     'interpolate': False
                 }
             },
@@ -57,15 +60,13 @@ class TestPatternResponseGenerator(TestCase):
                     'headers': {
                         'Content-Type': 'application/xml'
                     },
-                    'body': '<profile><user>{0}</user><org>yam.ai</org><grade>premium</grade></profile>',
+                    'content': '<profile><user>{0}</user><org>yam.ai</org><grade>premium</grade></profile>',
                     'interpolate': True
                 },
                 'PUT': {
                     'status': 409,
-                    'headers': {
-                        'Content-Type': 'text/plain'
-                    },
-                    'body': 'object already updated'
+                    'content': 'object already updated',
+                    'contentType': "text"
                 }
             }
         }
@@ -84,14 +85,14 @@ class TestPatternResponseGenerator(TestCase):
                         'path': '/users/tomlee/todo/123',
                         'method': Method.GET,
                         'headers': {'a': 1},
-                        'body_io': BytesIO(b'Hello World')
+                        'content_io': BytesIO(b'Hello World')
                     },
                     'expected': {
                         'status': 200,
                         'headers': {
                             'Content-Type': 'application/json'
                         },
-                        'body_bytes': dumps({
+                        'content_bytes': dumps({
                             'user': 'tomlee',
                             'taskid': '123',
                             'task': 'Buy milk',
@@ -104,12 +105,12 @@ class TestPatternResponseGenerator(TestCase):
                         'path': '/users/tomlee/todo/123',
                         'method': Method.DELETE,
                         'headers': {'a': 1},
-                        'body_io': BytesIO(b'Hello World')
+                        'content_io': BytesIO(b'Hello World')
                     },
                     'expected': {
                         'status': 410,
                         'headers': {},
-                        'body_bytes': b'',
+                        'content_bytes': b'',
                     }
                 },
                 {
@@ -117,14 +118,14 @@ class TestPatternResponseGenerator(TestCase):
                         'path': '/users/tomlee/todo/',
                         'method': Method.GET,
                         'headers': {'a': 1},
-                        'body_io': BytesIO(b'Hello World')
+                        'content_io': BytesIO(b'Hello World')
                     },
                     'expected': {
                         'status': 200,
                         'headers': {
                             'Content-Type': 'application/json'
                         },
-                        'body_bytes': dumps([
+                        'content_bytes': dumps([
                             '123', '456', '789'
                         ]).encode('utf-8'),
                     }
@@ -134,13 +135,13 @@ class TestPatternResponseGenerator(TestCase):
                         'path': '/users/tomlee/todo/',
                         'method': Method.POST,
                         'headers': {'a': 1},
-                        'body_io': BytesIO(b'Hello World')
+                        'content_io': BytesIO(b'Hello World')
                     },
                     'expected': {
                         'status': 200,
                         'headers': {'Content-Type': 'application/json'},
-                        'body_bytes': dumps({
-                            'taskid': 123
+                        'content_bytes': dumps({
+                            'taskid': "123"
                         }).encode('utf-8'),
                     }
                 },
@@ -151,12 +152,12 @@ class TestPatternResponseGenerator(TestCase):
                         'headers': {
                             'Content-Type': 'application/xml'
                         },
-                        'body_io': BytesIO(b'Hello World')
+                        'content_io': BytesIO(b'Hello World')
                     },
                     'expected': {
                         'status': 200,
                         'headers': {'Content-Type': 'application/xml'},
-                        'body_bytes': b'<profile><user>tomlee</user><org>yam.ai</org><grade>premium</grade></profile>'
+                        'content_bytes': b'<profile><user>tomlee</user><org>yam.ai</org><grade>premium</grade></profile>'
                     }
                 },
                 {
@@ -166,12 +167,12 @@ class TestPatternResponseGenerator(TestCase):
                         'headers': {
                             'Content-Type': 'xml/plain'
                         },
-                        'body_io': BytesIO(b'Hello World')
+                        'content_io': BytesIO(b'Hello World')
                     },
                     'expected': {
                         'status': 409,
                         'headers': {'Content-Type': 'text/plain'},
-                        'body_bytes': b'object already updated'
+                        'content_bytes': b'object already updated'
                     }
                 },
                 {
@@ -179,12 +180,12 @@ class TestPatternResponseGenerator(TestCase):
                         'path': '/users/tomlee/todo/abc',
                         'method': Method.GET,
                         'headers': {},
-                        'body_io': BytesIO(b'Hello World')
+                        'content_io': BytesIO(b'Hello World')
                     },
                     'expected': {
                         'status': 404,
                         'headers': {},
-                        'body_bytes': b''
+                        'content_bytes': b''
                     }
                 },
                 {
@@ -192,12 +193,12 @@ class TestPatternResponseGenerator(TestCase):
                         'path': '/users/tomlee/todo/123',
                         'method': Method.POST,
                         'headers': {},
-                        'body_io': BytesIO(b'Hello World')
+                        'content_io': BytesIO(b'Hello World')
                     },
                     'expected': {
                         'status': 404,
                         'headers': {},
-                        'body_bytes': b''
+                        'content_bytes': b''
                     }
                 }
             ]
@@ -212,4 +213,4 @@ class TestPatternResponseGenerator(TestCase):
                 )
                 self.assertEqual(resp.status, t['expected']['status'])
                 self.assertEqual(resp.headers, t['expected']['headers'])
-                self.assertEqual(resp.body_bytes, t['expected']['body_bytes'])
+                self.assertEqual(resp.content_bytes, t['expected']['content_bytes'])
