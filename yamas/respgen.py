@@ -105,7 +105,7 @@ class ResponseGenerator:
 
 
 class ResponseSelector:
-    def __init__(self, loop=False):
+    def __init__(self, loop):
         self.response_makers = []
         self.loop = loop
         self.idx = 0
@@ -121,11 +121,10 @@ class ResponseSelector:
         if self.idx >= num_response_makers:
             self.idx == 0
         response_maker = self.response_makers[self.idx]
-        self.idx + 1
         if self.loop:
             self.idx = (self.idx + 1) % num_response_makers
         else:
-            self.idx = min(self.idx, num_response_makers - 1)
+            self.idx = min(self.idx + 1, num_response_makers - 1)
         return response_maker.make_response(groups)
 
 
@@ -186,7 +185,7 @@ class PatternResponseGenerator(ResponseGenerator):
                     mock_response: MockResponse):
         respsel_dict = self.matchers.get(pattern)
         if not respsel_dict:
-            respsel_dict = {method: ResponseSelector()
+            respsel_dict = {method: ResponseSelector(loop=False)
                             for method in list(Method)}
             self.matchers[pattern] = respsel_dict
         respsel_dict[method].add_response_maker(

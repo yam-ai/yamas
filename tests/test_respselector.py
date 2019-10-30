@@ -1,0 +1,46 @@
+# coding=utf-8
+# Copyright 2019 YAM AI Machinery Limited
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import unittest
+# import io
+# import sys
+from http import HTTPStatus
+from collections import OrderedDict
+from yamas.respgen import ResponseMaker, ResponseSelector
+from copy import deepcopy
+
+
+class TestReponseSelector(unittest.TestCase):
+    def setUp(self):
+        self.respsel = ResponseSelector(loop=False)
+        self.respsel_loop = ResponseSelector(loop=True)
+        self.respmakers = [
+            ResponseMaker(HTTPStatus.OK, {}, str(i), False)
+            for i in range(3)
+        ]
+
+    def test_select_response_maker(self):
+        for rm in self.respmakers:
+            self.respsel.add_response_maker(rm)
+            self.respsel_loop.add_response_maker(rm)
+        for i in range(5):
+            self.assertEqual(
+                self.respsel.select_response_maker(
+                    tuple()).body_bytes.decode('utf-8'),
+                str(min(i, 2)))
+            self.assertEqual(
+                self.respsel_loop.select_response_maker(
+                    tuple()).body_bytes.decode('utf-8'),
+                str(i % 3))
