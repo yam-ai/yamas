@@ -16,7 +16,7 @@
 from unittest import TestCase
 from unittest.mock import patch, mock_open
 from yamas.server import Yamas
-from yamas.ex import ServerError
+from yamas.ex import MockSpecError
 
 
 class TestYamas(TestCase):
@@ -88,5 +88,5 @@ class TestYamas(TestCase):
     def test_http_reqestus(self, mock_file):
         mock_spec = '/some/mock/response/json'
         server = Yamas()
-        self.assertRaises(ServerError, server.load_data, mock_spec)
+        self.assertRaises(MockSpecError, server.load_data, mock_spec)
         mock_file.assert_called_with(mock_spec, 'r')

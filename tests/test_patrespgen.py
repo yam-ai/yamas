@@ -19,7 +19,7 @@ from http import HTTPStatus
 from json import dumps
 from yamas.respgen import ResponseMaker, ResponseSelector, PatternResponseGenerator
 from yamas.reqresp import Request, Response, Method
-from yamas.ex import GeneratorError
+from yamas.ex import MockSpecError
 
 
 class TestPatternResponseGenerator(TestCase):
@@ -334,7 +334,7 @@ class TestPatternResponseGenerator(TestCase):
         for _, t in tests.items():
             g = PatternResponseGenerator()
             self.assertRaises(
-                GeneratorError,
+                MockSpecError,
                 g.load_from_dict,
                 t
             )

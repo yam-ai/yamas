@@ -19,7 +19,7 @@ from json import loads, dumps
 from http import HTTPStatus
 from typing import Pattern
 from yamas.reqresp import Request, Response, Method, ContentType
-from yamas.ex import GeneratorError, RequestError, ResponseError
+from yamas.ex import MockSpecError, RequestError, ResponseError
 
 
 class ResponseMaker:
@@ -37,7 +37,7 @@ class ResponseMaker:
         elif content is None or isinstance(content, str):
             self.make_content_str(content, content_type)
         elif content is not None:
-            raise GeneratorError(
+            raise MockSpecError(
                 f'Content "{dumps(content)}" is not a string but its type is text or not given')
         self.process_headers()
         return
@@ -48,7 +48,7 @@ class ResponseMaker:
             if v is None or v == '':
                 headers_to_delete.append(k)
             elif not isinstance(v, str):
-                raise GeneratorError(
+                raise MockSpecError(
                     f'The value for the header {k} must be a string')
         for k in headers_to_delete:
             del self.headers[k]
@@ -60,7 +60,7 @@ class ResponseMaker:
         if content == '':
             self.interpolate = False
         elif not isinstance('content', str):
-            raise GeneratorError('Text content must be given as a string.')
+            raise MockSpecError('Text content must be given as a string.')
         if self.interpolate:
             self.template = content
         else:
@@ -82,7 +82,7 @@ class ResponseMaker:
                 json_str = dumps(content)
                 self.content_bytes = json_str.encode('utf-8')
             except Exception as e:
-                raise GeneratorError(f'Failed to encode dict into JSON {e}')
+                raise MockSpecError(f'Failed to encode dict into JSON {e}')
         content_type_header = self.headers.get('Content-Type')
         if content_type_header is None or content_type_header != '':
             self.headers['Content-Type'] = 'application/json'
@@ -173,7 +173,7 @@ class PatternResponseGenerator(ResponseGenerator):
             try:
                 cpat = re.compile(pat)
             except:
-                raise GeneratorError(f'Failed to compile pattern {pat}')
+                raise MockSpecError(f'Failed to compile pattern {pat}')
             for method in list(Method):
                 resp = resps.get(method.value)
                 if not resp:
@@ -181,8 +181,8 @@ class PatternResponseGenerator(ResponseGenerator):
                 try:
                     mock_response = PatternResponseGenerator.parse_mock_response(
                         resp)
-                except GeneratorError as e:
-                    raise GeneratorError(
+                except MockSpecError as e:
+                    raise MockSpecError(
                         f'Error parsing mock responses for pattern {pat} and {method.value}: {e}')
                 self.add_matcher(cpat, method, mock_response)
         return
@@ -193,7 +193,7 @@ class PatternResponseGenerator(ResponseGenerator):
         try:
             status = HTTPStatus(status_code)
         except:
-            raise GeneratorError(f'Unrecognized status code {status_code}')
+            raise MockSpecError(f'Unrecognized status code {status_code}')
         headers = resp.get('headers')
         content = resp.get('content')
         interpolate = resp.get('interpolate')
@@ -202,14 +202,14 @@ class PatternResponseGenerator(ResponseGenerator):
             try:
                 content_type = ContentType(content_type_str)
             except Exception:
-                raise GeneratorError(
+                raise MockSpecError(
                     f'Unsupported contenntType {content_type_str}')
         else:
             content_type = None
         if interpolate is None:
             interpolate = False
         elif not isinstance(interpolate, bool):
-            raise GeneratorError(
+            raise MockSpecError(
                 f'The interpolate field must be boolean')
         return MockResponse(status, headers, content, content_type, interpolate)
 
@@ -217,7 +217,7 @@ class PatternResponseGenerator(ResponseGenerator):
         try:
             matcher_dict = loads(matcher_json, object_pairs_hook=OrderedDict)
         except Exception as e:
-            raise GeneratorError(f'Failed to parse JSON: {e}')
+            raise MockSpecError(f'Failed to parse JSON: {e}')
         self.load_from_dict(matcher_dict)
         return
 

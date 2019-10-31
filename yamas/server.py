@@ -17,7 +17,7 @@ from http.server import HTTPServer, HTTPStatus
 from typing import Callable
 from yamas.respgen import Method, ResponseGenerator, PatternResponseGenerator
 from yamas.handler import MockRequestHandler
-from yamas.ex import GeneratorError, ServerError
+from yamas.ex import MockSpecError, ServerError
 
 SERVER_HEADER = 'yamas'
 SYS_VERSION = '0.1'
@@ -37,12 +37,9 @@ class Yamas:
         return
 
     def load_data(self, mock_file: str):
-        try:
-            with open(mock_file, 'r') as f:
-                mock_data = f.read()
-            self.respgen.load_from_json(mock_data)
-        except Exception as e:
-            raise ServerError(e)
+        with open(mock_file, 'r') as f:
+            mock_data = f.read()
+        self.respgen.load_from_json(mock_data)
         return
 
     def run(self, ip: str, port: int):
