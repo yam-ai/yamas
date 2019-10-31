@@ -43,12 +43,15 @@ class ResponseMaker:
         return
 
     def process_headers(self):
+        headers_to_delete = []
         for k, v in self.headers.items():
             if v is None or v == '':
-                del self.headers[k]
-            if not isinstance(v, str):
+                headers_to_delete.append(k)
+            elif not isinstance(v, str):
                 raise GeneratorError(
                     f'The value for the header {k} must be a string')
+        for k in headers_to_delete:
+            del self.headers[k]
         return
 
     def make_content_str(self, content: str, content_type: ContentType):

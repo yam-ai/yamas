@@ -44,12 +44,12 @@ class TestPatternResponseGenerator(TestCase):
             '^/users/\\w+/todo/?$': {
                 'GET': {
                     'status': 200,
-                    'content': ["123", "456", "789"],
+                    'content': ['123', '456', '789'],
                     'contentType': 'json'
                 },
                 'POST': {
                     'content': {
-                        'taskid': "123"
+                        'taskid': '123'
                     },
                     'contentType': 'json',
                     'interpolate': False
@@ -67,9 +67,29 @@ class TestPatternResponseGenerator(TestCase):
                 'PUT': {
                     'status': 409,
                     'content': 'object already updated',
-                    'contentType': "text"
+                    'contentType': 'text'
                 }
-            }
+            },
+            '^/users/(\\w+)/profile$': {
+                'GET': {
+                    'status': 200,
+                    'headers': {
+                        'Content-Type': ''
+                    },
+                    'content': 'Hello {0}',
+                    'contentType': 'text',
+                    'interpolate': True
+                },
+                'POST': {
+                    'status': 200,
+                    'headers': {
+                        'Content-Type': ''
+                    },
+                    'content': {'hello': '{0}'},
+                    'contentType': 'json',
+                    'interpolate': True
+                }
+            },
         }
         self.mock_json_norm = dumps(self.mock_dict_norm)
 
@@ -200,6 +220,30 @@ class TestPatternResponseGenerator(TestCase):
                         'status': 404,
                         'headers': {},
                         'content_bytes': b''
+                    }
+                },
+                {
+                    'request': {
+                        'path': '/users/tomlee/profile',
+                        'method': Method.GET,
+                        'content_io': BytesIO(b'Hello World')
+                    },
+                    'response': {
+                        'status': 200,
+                        'headers': {},
+                        'content_bytes': b'Hello tomlee'
+                    }
+                },
+                {
+                    'request': {
+                        'path': '/users/tomlee/profile',
+                        'method': Method.POST,
+                        'content_io': BytesIO(b'Hello World')
+                    },
+                    'response': {
+                        'status': 200,
+                        'headers': {},
+                        'content_bytes': dumps({'hello': 'tomlee'}).encode('utf-8')
                     }
                 }
             ]
