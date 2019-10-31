@@ -24,112 +24,112 @@ from yamas.reqresp import ContentType
 from yamas.ex import ResponseError
 from copy import deepcopy
 
-HEADERS = {'a': '1', 'b': '2'}
-CONTENT_DICT = {'x': '{0}', 'y': '{1}'}
-CONTENT_STR = dumps(CONTENT_DICT)
-CONTENT_BYTES = CONTENT_STR.encode('utf-8')
-HEADERS_WITH_JSON_TYPE = dict(
-    list(HEADERS.items()) + [('Content-Type', 'application/json')])
-HEADERS_WITH_TEXT_TYPE = dict(
-    list(HEADERS.items()) + [('Content-Type', 'text/plain')])
-HEADERS_WITH_EMPTY_TYPE = dict(
-    list(HEADERS.items()) + [('Content-Type', '')])
 
-tests = [
-    (
-        {
-            'status': HTTPStatus.OK,
-            'headers': deepcopy(HEADERS),
-            'content': CONTENT_STR,
-            'content_type': ContentType.TEXT,
-            'interpolate': False
-        },
-        {
-            'status': HTTPStatus.OK,
-            'headers': HEADERS_WITH_TEXT_TYPE,
-            'content_bytes': CONTENT_STR.encode('utf-8'),
-            'content_type': ContentType.TEXT,
-            'template': None,
-            'interpolate': False
-        }
-    ),
-    (
-        {
-            'status': HTTPStatus.OK,
-            'headers': deepcopy(HEADERS),
-            'content': deepcopy(CONTENT_DICT),
-            'content_type': ContentType.JSON,
-            'interpolate': False
-        },
-        {
-            'status': HTTPStatus.OK,
-            'headers': HEADERS_WITH_JSON_TYPE,
-            'content_bytes': CONTENT_STR.encode('utf-8'),
-            'content_type': ContentType.JSON,
-            'template': None,
-            'interpolate': False
-        }
-    ),
-    (
-        {
-            'status': HTTPStatus.OK,
-            'headers': deepcopy(HEADERS),
-            'content': CONTENT_STR,
-            'content_type': ContentType.TEXT,
-            'interpolate': True
-        },
-        {
-            'status': HTTPStatus.OK,
-            'headers': HEADERS_WITH_TEXT_TYPE,
-            'content_bytes': None,
-            'content_type': ContentType.TEXT,
-            'template': CONTENT_STR,
-            'interpolate': True
-        }
-    ),
-    (
-        {
-            'status': HTTPStatus.OK,
-            'headers': deepcopy(HEADERS),
-            'content': deepcopy(CONTENT_DICT),
-            'content_type': ContentType.JSON,
-            'interpolate': True
-        },
-        {
-            'status': HTTPStatus.OK,
-            'headers': HEADERS_WITH_JSON_TYPE,
-            'content_bytes': None,
-            'content_type': ContentType.JSON,
-            'template': CONTENT_DICT,
-            'interpolate': True
-        }
-    ),
-    (
-        {
-            'status': HTTPStatus.OK,
-            'headers': deepcopy(HEADERS),
-            'content': deepcopy(CONTENT_DICT),
-            'content_type': ContentType.JSON,
-            'interpolate': True
-        },
-        {
-            'status': HTTPStatus.OK,
-            'headers': HEADERS_WITH_JSON_TYPE,
-            'content_bytes': None,
-            'content_type': ContentType.JSON,
-            'template': CONTENT_DICT,
-            'interpolate': True
-        }
-    )
-]
+class TestResponseMaker:
+    HEADERS = {'a': '1', 'b': '2'}
+    CONTENT_DICT = {'x': '{0}', 'y': '{1}'}
+    CONTENT_STR = dumps(CONTENT_DICT)
+    CONTENT_BYTES = CONTENT_STR.encode('utf-8')
+    HEADERS_WITH_JSON_TYPE = dict(
+        list(HEADERS.items()) + [('Content-Type', 'application/json')])
+    HEADERS_WITH_TEXT_TYPE = dict(
+        list(HEADERS.items()) + [('Content-Type', 'text/plain')])
+    HEADERS_WITH_EMPTY_TYPE = dict(
+        list(HEADERS.items()) + [('Content-Type', '')])
+    tests = [
+        (
+            {
+                'status': HTTPStatus.OK,
+                'headers': deepcopy(HEADERS),
+                'content': CONTENT_STR,
+                'content_type': ContentType.TEXT,
+                'interpolate': False
+            },
+            {
+                'status': HTTPStatus.OK,
+                'headers': HEADERS_WITH_TEXT_TYPE,
+                'content_bytes': CONTENT_STR.encode('utf-8'),
+                'content_type': ContentType.TEXT,
+                'template': None,
+                'interpolate': False
+            }
+        ),
+        (
+            {
+                'status': HTTPStatus.OK,
+                'headers': deepcopy(HEADERS),
+                'content': deepcopy(CONTENT_DICT),
+                'content_type': ContentType.JSON,
+                'interpolate': False
+            },
+            {
+                'status': HTTPStatus.OK,
+                'headers': HEADERS_WITH_JSON_TYPE,
+                'content_bytes': CONTENT_STR.encode('utf-8'),
+                'content_type': ContentType.JSON,
+                'template': None,
+                'interpolate': False
+            }
+        ),
+        (
+            {
+                'status': HTTPStatus.OK,
+                'headers': deepcopy(HEADERS),
+                'content': CONTENT_STR,
+                'content_type': ContentType.TEXT,
+                'interpolate': True
+            },
+            {
+                'status': HTTPStatus.OK,
+                'headers': HEADERS_WITH_TEXT_TYPE,
+                'content_bytes': None,
+                'content_type': ContentType.TEXT,
+                'template': CONTENT_STR,
+                'interpolate': True
+            }
+        ),
+        (
+            {
+                'status': HTTPStatus.OK,
+                'headers': deepcopy(HEADERS),
+                'content': deepcopy(CONTENT_DICT),
+                'content_type': ContentType.JSON,
+                'interpolate': True
+            },
+            {
+                'status': HTTPStatus.OK,
+                'headers': HEADERS_WITH_JSON_TYPE,
+                'content_bytes': None,
+                'content_type': ContentType.JSON,
+                'template': CONTENT_DICT,
+                'interpolate': True
+            }
+        ),
+        (
+            {
+                'status': HTTPStatus.OK,
+                'headers': deepcopy(HEADERS),
+                'content': deepcopy(CONTENT_DICT),
+                'content_type': ContentType.JSON,
+                'interpolate': True
+            },
+            {
+                'status': HTTPStatus.OK,
+                'headers': HEADERS_WITH_JSON_TYPE,
+                'content_bytes': None,
+                'content_type': ContentType.JSON,
+                'template': CONTENT_DICT,
+                'interpolate': True
+            }
+        )
+    ]
 
-
-@pytest.mark.parametrize('input, expected', tests)
-def test_response_maker(input, expected):
-    rm = ResponseMaker(**input)
-    assert rm.status == expected['status']
-    assert rm.headers == expected['headers']
-    assert rm.content_bytes == expected['content_bytes']
-    assert rm.content_type == expected['content_type']
-    assert rm.template == expected['template']
-    assert rm.interpolate == expected['interpolate']
+    @pytest.mark.parametrize('input, expected', tests)
+    def test_response_maker(self, input, expected):
+        rm = ResponseMaker(**input)
+        assert rm.status == expected['status']
+        assert rm.headers == expected['headers']
+        assert rm.content_bytes == expected['content_bytes']
+        assert rm.content_type == expected['content_type']
+        assert rm.template == expected['template']
+        assert rm.interpolate == expected['interpolate']

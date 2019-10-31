@@ -19,26 +19,27 @@ from yamas.respgen import ResponseMaker, ResponseSelector
 from yamas.reqresp import ContentType
 import pytest
 
-respmakers = [
-    ResponseMaker(HTTPStatus.OK, {}, str(i), ContentType.TEXT, False)
-    for i in range(3)
-]
-respsels = []
-for loop in [True, False]:
-    respsel = ResponseSelector(loop)
-    respsels.append((respsel, loop))
-    for rm in respmakers:
-        respsel.add_response_maker(rm)
-print(respsels)
 
+class TestResponseSelector:
 
-@pytest.mark.parametrize('respsel, loop', respsels)
-def test_select_response_selector(respsel, loop):
-    print(f'respsel.loop = {respsel.loop}, loop = {loop}')
-    for i in range(5):
-        if loop:
-            assert respsel.make_response(tuple()).content_bytes.decode(
-                'utf-8') == str(i % 3)
-        else:
-            assert respsel.make_response(tuple()).content_bytes.decode(
-                'utf-8') == str(min(i, 2))
+    respmakers = [
+        ResponseMaker(HTTPStatus.OK, {}, str(i), ContentType.TEXT, False)
+        for i in range(3)
+    ]
+    respsels = []
+
+    for loop in [True, False]:
+        respsel = ResponseSelector(loop)
+        respsels.append((respsel, loop))
+        for rm in respmakers:
+            respsel.add_response_maker(rm)
+
+    @pytest.mark.parametrize('respsel, loop', respsels)
+    def test_select_response_selector(self, respsel, loop):
+        for i in range(5):
+            if loop:
+                assert respsel.make_response(tuple()).content_bytes.decode(
+                    'utf-8') == str(i % 3)
+            else:
+                assert respsel.make_response(tuple()).content_bytes.decode(
+                    'utf-8') == str(min(i, 2))

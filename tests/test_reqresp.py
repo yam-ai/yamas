@@ -34,26 +34,28 @@ CONTENT_BYTES = CONTENT_UTF8.encode('utf-8')
 STATUS = HTTPStatus.OK
 
 
-@pytest.fixture(scope='session')
-def req() -> Request:
-    return Request(PATH, METHOD, HEADERS, BytesIO(CONTENT_BYTES))
+class TestRequest:
+
+    @pytest.fixture(scope='session')
+    def req(self) -> Request:
+        return Request(PATH, METHOD, HEADERS, BytesIO(CONTENT_BYTES))
+
+    def test_request(self, req):
+        assert req.path == PATH
+        assert req.method == METHOD
+        assert req.headers == HEADERS
+        assert req.content_bytes() == CONTENT_BYTES
+        assert req.content_utf8() == CONTENT_UTF8
+        assert req.content_json() == CONTENT_JSON
 
 
-def test_request(req):
-    assert req.path == PATH
-    assert req.method == METHOD
-    assert req.headers == HEADERS
-    assert req.content_bytes() == CONTENT_BYTES
-    assert req.content_utf8() == CONTENT_UTF8
-    assert req.content_json() == CONTENT_JSON
+class TestResponse:
 
+    @pytest.fixture(scope='session')
+    def resp(self) -> Response:
+        return Response(HTTPStatus.OK, HEADERS, CONTENT_BYTES)
 
-@pytest.fixture(scope='session')
-def resp() -> Response:
-    return Response(HTTPStatus.OK, HEADERS, CONTENT_BYTES)
-
-
-def test_response(resp):
-    assert resp.status == HTTPStatus.OK
-    assert resp.headers == HEADERS
-    assert resp.content_bytes == CONTENT_BYTES
+    def test_response(self, resp):
+        assert resp.status == HTTPStatus.OK
+        assert resp.headers == HEADERS
+        assert resp.content_bytes == CONTENT_BYTES

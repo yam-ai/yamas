@@ -211,7 +211,8 @@ class PatternResponseGenerator(ResponseGenerator):
         elif not isinstance(interpolate, bool):
             raise MockSpecError(
                 f'The interpolate field must be boolean')
-        return MockResponse(status, headers, content, content_type, interpolate)
+        return MockResponse(status, headers, content,
+                            content_type, interpolate)
 
     def load_from_json(self, matcher_json: str):
         try:
