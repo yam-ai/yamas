@@ -58,12 +58,14 @@ The mock responses and the rules of selecting them are specified in a JSON file,
                 "123",
                 "456",
                 "789"
-            ]
+            ],
+            "contentType": "json"
         },
         "POST": {
             "content": {
                 "taskid": "123"
             },
+            "contentType": "json",
             "interpolate": false
         }
     },

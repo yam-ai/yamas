@@ -38,7 +38,7 @@ class ResponseMaker:
             self.make_content_str(content, content_type)
         elif content is not None:
             raise GeneratorError(
-                'Content must be a string when the content type is text or not given')
+                f'Content "{dumps(content)}" is not a string but its type is text or not given')
         self.process_headers()
         return
 
@@ -178,8 +178,12 @@ class PatternResponseGenerator(ResponseGenerator):
                 resp = resps.get(method.value)
                 if not resp:
                     continue
-                mock_response = PatternResponseGenerator.parse_mock_response(
-                    resp)
+                try:
+                    mock_response = PatternResponseGenerator.parse_mock_response(
+                        resp)
+                except GeneratorError as e:
+                    raise GeneratorError(
+                        f'Error parsing mock responses for pattern {pat} and {method.value}: {e}')
                 self.add_matcher(cpat, method, mock_response)
         return
 

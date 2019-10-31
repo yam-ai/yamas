@@ -22,12 +22,14 @@
                 "123",
                 "456",
                 "789"
-            ]
+            ],
+            "contentType": "json"
         },
         "POST": {
             "content": {
                 "taskid": "123"
             },
+            "contentType": "json",
             "interpolate": false
         }
     },
