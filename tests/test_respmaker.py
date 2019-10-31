@@ -27,7 +27,7 @@ from copy import deepcopy
 
 class TestReponseMaker(TestCase):
     def setUp(self):
-        self.headers = {'a': 1, 'b': 2}
+        self.headers = {'a': '1', 'b': '2'}
         self.content_dict = {'x': '{0}', 'y': '{1}'}
         self.content_str = '{"x": "{0}", "y": "{1}"}'
         self.content_bytes = self.content_str.encode('utf-8')
@@ -135,7 +135,8 @@ class TestReponseMaker(TestCase):
                 rm = ResponseMaker(**t['input'])
                 self.assertEqual(rm.status, t['expect']['status'])
                 self.assertDictEqual(rm.headers, t['expect']['headers'])
-                self.assertEqual(rm.content_bytes, t['expect']['content_bytes'])
+                self.assertEqual(rm.content_bytes,
+                                 t['expect']['content_bytes'])
                 self.assertEqual(rm.content_type, t['expect']['content_type'])
                 self.assertEqual(rm.template, t['expect']['template'])
                 self.assertEqual(rm.interpolate, t['expect']['interpolate'])

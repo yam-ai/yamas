@@ -19,6 +19,7 @@ from http import HTTPStatus
 from json import dumps
 from yamas.respgen import ResponseMaker, ResponseSelector, PatternResponseGenerator
 from yamas.reqresp import Request, Response, Method
+from yamas.ex import GeneratorError
 
 
 class TestPatternResponseGenerator(TestCase):
@@ -72,7 +73,7 @@ class TestPatternResponseGenerator(TestCase):
         }
         self.mock_json_norm = dumps(self.mock_dict_norm)
 
-    def test_patrespgen_load_norm(self):
+    def test_valid_mock(self):
         g0 = PatternResponseGenerator()
         g0.load_from_dict(self.mock_dict_norm)
         g1 = PatternResponseGenerator()
@@ -84,7 +85,7 @@ class TestPatternResponseGenerator(TestCase):
                     'input': {
                         'path': '/users/tomlee/todo/123',
                         'method': Method.GET,
-                        'headers': {'a': 1},
+                        'headers': {'a': '1'},
                         'content_io': BytesIO(b'Hello World')
                     },
                     'expected': {
@@ -104,7 +105,7 @@ class TestPatternResponseGenerator(TestCase):
                     'input': {
                         'path': '/users/tomlee/todo/123',
                         'method': Method.DELETE,
-                        'headers': {'a': 1},
+                        'headers': {'a': '1'},
                         'content_io': BytesIO(b'Hello World')
                     },
                     'expected': {
@@ -117,7 +118,7 @@ class TestPatternResponseGenerator(TestCase):
                     'input': {
                         'path': '/users/tomlee/todo/',
                         'method': Method.GET,
-                        'headers': {'a': 1},
+                        'headers': {'a': '1'},
                         'content_io': BytesIO(b'Hello World')
                     },
                     'expected': {
@@ -134,7 +135,7 @@ class TestPatternResponseGenerator(TestCase):
                     'input': {
                         'path': '/users/tomlee/todo/',
                         'method': Method.POST,
-                        'headers': {'a': 1},
+                        'headers': {'a': '1'},
                         'content_io': BytesIO(b'Hello World')
                     },
                     'expected': {
@@ -208,9 +209,118 @@ class TestPatternResponseGenerator(TestCase):
                         t['input']['path'],
                         t['input']['method'],
                         t['input'].get('headers'),
-                        t['input']['headers'],
+                        t['input']['content_io'],
                     )
                 )
                 self.assertEqual(resp.status, t['expected']['status'])
                 self.assertEqual(resp.headers, t['expected']['headers'])
-                self.assertEqual(resp.content_bytes, t['expected']['content_bytes'])
+                self.assertEqual(resp.content_bytes,
+                                 t['expected']['content_bytes'])
+
+    def test_invalid_mock(self):
+        tests = {
+            'invalid_regex': {
+                '(': {
+                    'GET': {
+                        'status': 200
+                    }
+                }
+            },
+            'invalid_content_type': {
+                '/abc': {
+                    'GET': {
+                        'status': 200,
+                        'content': 'abc',
+                        'contentType': 'str'
+                    }
+                }
+            },
+            'invalid_status': {
+                '/abc': {
+                    'GET': {
+                        'status': 777,
+                    }
+                }
+            },
+            'text_type_not_number': {
+                '/abc': {
+                    'GET': {
+                        'content': 123,
+                        'contentType': 'text'
+                    }
+                }
+            },
+            'text_type_not_object': {
+                '/abc': {
+                    'GET': {
+                        'content': {'x': 1},
+                        'contentType': 'text'
+                    }
+                }
+            },
+            'null_type_not_number': {
+                '/abc': {
+                    'GET': {
+                        'content': 123
+                    }
+                }
+            },
+            'null_type_not_object': {
+                '/abc': {
+                    'GET': {
+                        'content': {'x': 1},
+                    }
+                }
+            },
+            'header_not_number': {
+                '/abc': {
+                    'GET': {
+                        'headers': {'x': 1},
+                    }
+                }
+            },
+            'header_not_object': {
+                '/abc': {
+                    'GET': {
+                        'headers': {'x': {'y': '1'}},
+                    }
+                }
+            }
+        }
+        for _, t in tests.items():
+            g = PatternResponseGenerator()
+            self.assertRaises(
+                GeneratorError,
+                g.load_from_dict,
+                t
+            )
+
+    def test_response_not_found(self):
+        g = PatternResponseGenerator()
+        g.load_from_dict(self.mock_dict_norm)
+        tests = {
+            'pattern_not_matched': {
+                'path': '/users/tomlee/todo/xyz',
+                'method': Method.GET,
+                'headers': {'a': '1'},
+                'content_io': BytesIO(b'Hello World')
+            },
+            'method_not_matched': {
+                'path': '/users/tomlee/todo/123',
+                'method': Method.PATCH,
+                'headers': {'a': '1'},
+                'content_io': BytesIO(b'Hello World')
+
+            },
+        }
+        for _, t in tests.items():
+            resp = g.respond(
+                Request(
+                    t['path'],
+                    t['method'],
+                    t.get('headers'),
+                    t['content_io']
+                )
+            )
+            self.assertEqual(resp.status, HTTPStatus.NOT_FOUND)
+            self.assertEqual(resp.content_bytes, b'')

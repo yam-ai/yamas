@@ -31,37 +31,47 @@ class ResponseMaker:
         self.content_bytes = None
         self.template = None
         self.interpolate = interpolate
-        
+
         if self.content_type is ContentType.JSON:
             self.make_content_dict(content)
         elif content is None or isinstance(content, str):
             self.make_content_str(content, content_type)
         elif content is not None:
-            raise ResponseError('Content must be a string when the content type is text or not given')
+            raise GeneratorError(
+                'Content must be a string when the content type is text or not given')
+        self.process_headers()
+        return
+
+    def process_headers(self):
+        for k, v in self.headers.items():
+            if v is None or v == '':
+                del self.headers[k]
+            if not isinstance(v, str):
+                raise GeneratorError(
+                    f'The value for the header {k} must be a string')
         return
 
     def make_content_str(self, content: str, content_type: ContentType):
-        if content is None: content = ''
+        if content is None:
+            content = ''
         if content == '':
             self.interpolate = False
         elif not isinstance('content', str):
-            raise ResponseError('Text content must be given as a string.')
+            raise GeneratorError('Text content must be given as a string.')
         if self.interpolate:
             self.template = content
         else:
             self.content_bytes = content.encode('utf-8')
         content_type_header = self.headers.get('Content-Type')
-        if content_type is ContentType.TEXT:
-            if content_type_header is None or content_type_header != '':
-                self.headers['Content-Type'] = 'text/plain'            
-            elif content_type_header == '':
-                del self.headers['Content-Type']
+        if content_type is ContentType.TEXT and (
+                content_type_header is None or content_type_header != ''):
+            self.headers['Content-Type'] = 'text/plain'
         return
 
     def make_content_dict(self, content: dict):
         if not content:
             self.interpolate = False
-            self.content_bytes = b''     
+            self.content_bytes = b''
         if self.interpolate:
             self.template = content
         else:
@@ -69,12 +79,10 @@ class ResponseMaker:
                 json_str = dumps(content)
                 self.content_bytes = json_str.encode('utf-8')
             except Exception as e:
-                raise ResponseError(f'Failed to encode dict into JSON {e}')
-        content_type_header = self.headers.get('Content-Type') 
+                raise GeneratorError(f'Failed to encode dict into JSON {e}')
+        content_type_header = self.headers.get('Content-Type')
         if content_type_header is None or content_type_header != '':
-            self.headers['Content-Type'] = 'application/json'  
-        if content_type_header == '':
-            del self.headers['Content-Type']
+            self.headers['Content-Type'] = 'application/json'
         return
 
     @staticmethod
@@ -84,12 +92,14 @@ class ResponseMaker:
         if isinstance(template_item, dict):
             content_dict = OrderedDict()
             for k, v in template_item.items():
-                content_dict[k] = ResponseMaker.format_content_template(v, vars)
+                content_dict[k] = ResponseMaker.format_content_template(
+                    v, vars)
             return content_dict
         if isinstance(template_item, list):
             content_list = []
             for v in content_list:
-                content_list.append(ResponseMaker.format_content_template(v, vars))
+                content_list.append(
+                    ResponseMaker.format_content_template(v, vars))
             return content_list
         return template_item
 
@@ -139,6 +149,7 @@ class ResponseSelector:
             self.idx = min(self.idx + 1, num_response_makers - 1)
         return response_maker.make_response(groups)
 
+
 class MockResponse:
     def __init__(self, status: HTTPStatus, headers: dict, content: any, content_type: ContentType, interpolate: bool):
         self.status = status
@@ -147,9 +158,8 @@ class MockResponse:
         self.content_type = content_type
         self.interpolate = interpolate
 
+
 class PatternResponseGenerator(ResponseGenerator):
-
-
 
     def __init__(self):
         self.matchers = OrderedDict()
@@ -185,8 +195,10 @@ class PatternResponseGenerator(ResponseGenerator):
             try:
                 content_type = ContentType(content_type_str)
             except Exception:
-                raise GeneratorError(f'Unsupported contenntType {content_type_str}')
-        else: content_type = None
+                raise GeneratorError(
+                    f'Unsupported contenntType {content_type_str}')
+        else:
+            content_type = None
         if interpolate is None:
             interpolate = False
         elif not isinstance(interpolate, bool):
