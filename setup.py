@@ -43,4 +43,6 @@ setup(
     zip_safe=True,
     scripts=['bin/yamas'],
     packages=find_packages(exclude=['tests']),
+    setup_requires=['pytest-runner'],
+    tests_requires=['pytest']
 )

@@ -13,50 +13,47 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from unittest import TestCase
-import io
+from yamas.ex import RequestError
+from json import load
+from io import BufferedIOBase
+from enum import Enum
+from io import BytesIO
 from collections import OrderedDict
 from json import dumps
 from yamas.reqresp import Request, Method, Response
 from http import HTTPStatus
+import pytest
+import inspect
+
+PATH = '/p1/p2'
+METHOD = Method.GET
+HEADERS = {'a': '1', 'b': '2'}
+CONTENT_JSON = OrderedDict([('x', 1), ('y', 2)])
+CONTENT_UTF8 = dumps(CONTENT_JSON)
+CONTENT_BYTES = CONTENT_UTF8.encode('utf-8')
+STATUS = HTTPStatus.OK
 
 
-class TestRequest(TestCase):
-
-    def setUp(self):
-        self.path = '/p1/p2'
-        self.method = Method('GET')
-        self.headers = {'a': 1, 'b': 2}
-        self.content_dict = OrderedDict()
-        self.content_dict['x'] = 1
-        self.content_dict['y'] = 2
-        self.content_str = dumps(self.content_dict)
-        self.content_io = io.BytesIO(self.content_str.encode('utf-8'))
-        self.req = Request(self.path, self.method, self.headers, self.content_io)
-
-    def test_members(self):
-        self.assertEqual(self.req.path, self.path)
-        self.assertEqual(self.req.method, self.method)
-        self.assertEqual(self.req.headers, self.headers)
-
-    def test_content_bytes(self):
-        self.assertEqual(self.req.content_bytes(), self.content_str.encode('utf-8'))
-
-    def test_content_utf8(self):
-        self.assertEqual(self.req.content_utf8(), self.content_str)
-
-    def test_content_json(self):
-        self.assertEqual(self.req.content_json(), self.content_dict)
+@pytest.fixture(scope='session')
+def req() -> Request:
+    return Request(PATH, METHOD, HEADERS, BytesIO(CONTENT_BYTES))
 
 
-class TestResponse(TestCase):
-    def setUp(self):
-        self.status = HTTPStatus.OK
-        self.headers = {'a': 1, 'b': 2}
-        self.content_bytes = b'abc'
+def test_request(req):
+    assert req.path == PATH
+    assert req.method == METHOD
+    assert req.headers == HEADERS
+    assert req.content_bytes() == CONTENT_BYTES
+    assert req.content_utf8() == CONTENT_UTF8
+    assert req.content_json() == CONTENT_JSON
 
-    def test_members(self):
-        resp = Response(HTTPStatus.OK, self.headers, self.content_bytes)
-        self.assertEqual(resp.status, self.status)
-        self.assertEqual(resp.headers, self.headers)
-        self.assertEqual(resp.content_bytes, self.content_bytes)
+
+@pytest.fixture(scope='session')
+def resp() -> Response:
+    return Response(HTTPStatus.OK, HEADERS, CONTENT_BYTES)
+
+
+def test_response(resp):
+    assert resp.status == HTTPStatus.OK
+    assert resp.headers == HEADERS
+    assert resp.content_bytes == CONTENT_BYTES

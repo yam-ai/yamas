@@ -13,31 +13,55 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from unittest import TestCase
+from typing import List, Tuple
 from http import HTTPStatus
 from yamas.respgen import ResponseMaker, ResponseSelector
 from yamas.reqresp import ContentType
+import pytest
+
+respmakers = [
+    ResponseMaker(HTTPStatus.OK, {}, str(i), ContentType.TEXT, False)
+    for i in range(3)
+]
+respsels = []
+for loop in [True, False]:
+    respsel = ResponseSelector(loop)
+    respsels.append((respsel, loop))
+    for rm in respmakers:
+        respsel.add_response_maker(rm)
+print(respsels)
 
 
-class TestReponseSelector(TestCase):
-    def setUp(self):
-        self.respsel = ResponseSelector(loop=False)
-        self.respsel_loop = ResponseSelector(loop=True)
-        self.respmakers = [
-            ResponseMaker(HTTPStatus.OK, {}, str(i), ContentType.TEXT, False)
-            for i in range(3)
-        ]
+@pytest.mark.parametrize('respsel, loop', respsels)
+def test_select_response_maker(respsel, loop):
+    print(f'respsel.loop = {respsel.loop}, loop = {loop}')
+    for i in range(5):
+        if loop:
+            assert respsel.make_response(tuple()).content_bytes.decode(
+                'utf-8') == str(i % 3)
+        else:
+            assert respsel.make_response(tuple()).content_bytes.decode(
+                'utf-8') == str(min(i, 2))
 
-    def test_select_response_maker(self):
-        for rm in self.respmakers:
-            self.respsel.add_response_maker(rm)
-            self.respsel_loop.add_response_maker(rm)
-        for i in range(5):
-            self.assertEqual(
-                self.respsel.make_response(
-                    tuple()).content_bytes.decode('utf-8'),
-                str(min(i, 2)))
-            self.assertEqual(
-                self.respsel_loop.make_response(
-                    tuple()).content_bytes.decode('utf-8'),
-                str(i % 3))
+
+# class TestReponseSelector(TestCase):
+#     def setUp(self):
+#         self.respsel = ResponseSelector(loop=False)
+#         self.respsel_loop = ResponseSelector(loop=True)
+#         self.respmakers = [
+#             ResponseMaker(HTTPStatus.OK, {}, str(i), ContentType.TEXT, False)
+#             for i in range(3)
+#         ]
+#     def test_select_response_maker(self):
+#         for rm in self.respmakers:
+#             self.respsel.add_response_maker(rm)
+#             self.respsel_loop.add_response_maker(rm)
+#         for i in range(5):
+#             self.assertEqual(
+#                 self.respsel.make_response(
+#                     tuple()).content_bytes.decode('utf-8'),
+#                 str(min(i, 2)))
+#             self.assertEqual(
+#                 self.respsel_loop.make_response(
+#                     tuple()).content_bytes.decode('utf-8'),
+#                 str(i % 3))

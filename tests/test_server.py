@@ -14,13 +14,12 @@
 # limitations under the License.
 
 from unittest import TestCase
+# from unittest import IsolatedAsyncioTestCase
 from unittest.mock import patch, mock_open
 from yamas.server import Yamas
 from yamas.ex import MockSpecError
 
-
-class TestYamas(TestCase):
-    VALID_JSON = '''
+VALID_JSON = '''
 {
     "^/users/(\\\\w+)/todo/(\\\\d+)$": {
         "GET": {
@@ -73,7 +72,10 @@ class TestYamas(TestCase):
         }
     }
 }
-    '''
+'''
+
+
+class TestYamas(TestCase):
 
     INVALID_JSON = 'this is not a json'
 
@@ -90,3 +92,12 @@ class TestYamas(TestCase):
         server = Yamas()
         self.assertRaises(MockSpecError, server.load_data, mock_spec)
         mock_file.assert_called_with(mock_spec, 'r')
+
+
+# class TestServerResponses(IsolatedAsyncioTestCase):
+#     @patch('builtins.open', new_callable=mock_open, read_data=VALID_JSON)
+#     def setUp(self, mock_file):
+#         mock_spec = '/some/mock/response/json'
+#         self.server = Yamas()
+#         server.load_data(mock_spec)
+#         mock_file.assert_called_with(mock_spec, 'r')
