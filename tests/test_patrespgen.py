@@ -82,13 +82,13 @@ class TestPatternResponseGenerator(TestCase):
         for g in gens:
             tests = [
                 {
-                    'input': {
+                    'request': {
                         'path': '/users/tomlee/todo/123',
                         'method': Method.GET,
                         'headers': {'a': '1'},
                         'content_io': BytesIO(b'Hello World')
                     },
-                    'expected': {
+                    'response': {
                         'status': 200,
                         'headers': {
                             'Content-Type': 'application/json'
@@ -102,26 +102,26 @@ class TestPatternResponseGenerator(TestCase):
                     }
                 },
                 {
-                    'input': {
+                    'request': {
                         'path': '/users/tomlee/todo/123',
                         'method': Method.DELETE,
                         'headers': {'a': '1'},
                         'content_io': BytesIO(b'Hello World')
                     },
-                    'expected': {
+                    'response': {
                         'status': 410,
                         'headers': {},
                         'content_bytes': b'',
                     }
                 },
                 {
-                    'input': {
+                    'request': {
                         'path': '/users/tomlee/todo/',
                         'method': Method.GET,
                         'headers': {'a': '1'},
                         'content_io': BytesIO(b'Hello World')
                     },
-                    'expected': {
+                    'response': {
                         'status': 200,
                         'headers': {
                             'Content-Type': 'application/json'
@@ -132,13 +132,13 @@ class TestPatternResponseGenerator(TestCase):
                     }
                 },
                 {
-                    'input': {
+                    'request': {
                         'path': '/users/tomlee/todo/',
                         'method': Method.POST,
                         'headers': {'a': '1'},
                         'content_io': BytesIO(b'Hello World')
                     },
-                    'expected': {
+                    'response': {
                         'status': 200,
                         'headers': {'Content-Type': 'application/json'},
                         'content_bytes': dumps({
@@ -147,7 +147,7 @@ class TestPatternResponseGenerator(TestCase):
                     }
                 },
                 {
-                    'input': {
+                    'request': {
                         'path': '/users/tomlee/profile.xml',
                         'method': Method.GET,
                         'headers': {
@@ -155,14 +155,14 @@ class TestPatternResponseGenerator(TestCase):
                         },
                         'content_io': BytesIO(b'Hello World')
                     },
-                    'expected': {
+                    'response': {
                         'status': 200,
                         'headers': {'Content-Type': 'application/xml'},
                         'content_bytes': b'<profile><user>tomlee</user><org>yam.ai</org><grade>premium</grade></profile>'
                     }
                 },
                 {
-                    'input': {
+                    'request': {
                         'path': '/users/tomlee/profile.xml',
                         'method': Method.PUT,
                         'headers': {
@@ -170,33 +170,33 @@ class TestPatternResponseGenerator(TestCase):
                         },
                         'content_io': BytesIO(b'Hello World')
                     },
-                    'expected': {
+                    'response': {
                         'status': 409,
                         'headers': {'Content-Type': 'text/plain'},
                         'content_bytes': b'object already updated'
                     }
                 },
                 {
-                    'input': {
+                    'request': {
                         'path': '/users/tomlee/todo/abc',
                         'method': Method.GET,
                         'headers': {},
                         'content_io': BytesIO(b'Hello World')
                     },
-                    'expected': {
+                    'response': {
                         'status': 404,
                         'headers': {},
                         'content_bytes': b''
                     }
                 },
                 {
-                    'input': {
+                    'request': {
                         'path': '/users/tomlee/todo/123',
                         'method': Method.POST,
                         'headers': {},
                         'content_io': BytesIO(b'Hello World')
                     },
-                    'expected': {
+                    'response': {
                         'status': 404,
                         'headers': {},
                         'content_bytes': b''
@@ -206,16 +206,16 @@ class TestPatternResponseGenerator(TestCase):
             for t in tests:
                 resp = g.respond(
                     Request(
-                        t['input']['path'],
-                        t['input']['method'],
-                        t['input'].get('headers'),
-                        t['input']['content_io'],
+                        t['request']['path'],
+                        t['request']['method'],
+                        t['request'].get('headers'),
+                        t['request']['content_io'],
                     )
                 )
-                self.assertEqual(resp.status, t['expected']['status'])
-                self.assertEqual(resp.headers, t['expected']['headers'])
+                self.assertEqual(resp.status, t['response']['status'])
+                self.assertEqual(resp.headers, t['response']['headers'])
                 self.assertEqual(resp.content_bytes,
-                                 t['expected']['content_bytes'])
+                                 t['response']['content_bytes'])
 
     def test_invalid_mock(self):
         tests = {
@@ -324,3 +324,53 @@ class TestPatternResponseGenerator(TestCase):
             )
             self.assertEqual(resp.status, HTTPStatus.NOT_FOUND)
             self.assertEqual(resp.content_bytes, b'')
+
+    def test_interpolation_errors(self):
+        mock = {
+            '^/hello/(\\w)+$': {
+                'GET': {
+                    'status': 200,
+                    'content': 'hello {0} and {1}',
+                    'interpolate': True
+                }
+            },
+            '^/hello/(\\w)+/world/(\\d)+$': {
+                'POST': {
+                    'status': 200,
+                    'content': 'hello {0}',
+                    'interpolate': True
+                }
+            }
+        }
+
+        tests = [
+            {
+                'request': {
+                    'path': '/hello/tomlee',
+                    'method': Method.GET
+                },
+                'response': {
+                    'status': HTTPStatus.INTERNAL_SERVER_ERROR
+                }
+            },
+            {
+                'request': {
+                    'path': '/hello/tomlee/world/123',
+                    'method': Method.POST
+                },
+                'response': {
+                    'status': HTTPStatus.OK
+                }
+            }
+        ]
+
+        g = PatternResponseGenerator()
+        g.load_from_dict(mock)
+
+        for t in tests:
+            req = t['request']
+            resp = t['response']
+            actual_resp = g.respond(Request(
+                req['path'], req['method'], None, BytesIO(b'')
+            ))
+            self.assertEqual(actual_resp.status, resp['status'])
