@@ -13,11 +13,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from unittest import TestCase
-# from unittest import IsolatedAsyncioTestCase
+import pytest
 from unittest.mock import patch, mock_open
 from yamas.server import Yamas
 from yamas.ex import MockSpecError
+from threading import Thread
+from json import loads
+import requests
 
 VALID_JSON = '''
 {
@@ -70,25 +72,222 @@ VALID_JSON = '''
             "content": "object already updated",
             "contentType": "text"
         }
+    },
+    "^/users/(\\\\w+)/profile$": {
+        "GET": {
+            "status": 200,
+            "headers": {
+                "Content-Type": ""
+            },
+            "content": "Hello {0}",
+            "contentType": "text",
+            "interpolate": true
+        },
+        "POST": {
+            "status": 200,
+            "headers": {
+                "Content-Type": ""
+            },
+            "content": {"hello": "{0}"},
+            "contentType": "json",
+            "interpolate": true
+        }
     }
 }
 '''
 
+INVALID_JSON = 'this is not a json'
 
-class TestYamas(TestCase):
+HOST = 'localhost'
+PORT = 7777
 
-    INVALID_JSON = 'this is not a json'
+
+@pytest.fixture(scope='session', autouse=True)
+def yamas():
+    server = Yamas()
+    server.load_json(VALID_JSON)
+    thread = Thread(target=server.run, args=(HOST, PORT))
+    thread.daemon = True
+    thread.start()
+    print(f'Yamas test server is running on {HOST}:{PORT}')
+    return server
+
+
+class TestYamas:
 
     @patch('builtins.open', new_callable=mock_open, read_data=VALID_JSON)
-    def test_load_data(self, mock_file):
+    def test_load_file(self, mock_file):
         mock_spec = '/some/mock/response/json'
         server = Yamas()
-        server.load_data(mock_spec)
+        server.load_file(mock_spec)
         mock_file.assert_called_with(mock_spec, 'r')
 
     @patch('builtins.open', new_callable=mock_open, read_data=INVALID_JSON)
-    def test_http_reqestus(self, mock_file):
+    def test_loading_invalid_mock(self, mock_file):
         mock_spec = '/some/mock/response/json'
         server = Yamas()
-        self.assertRaises(MockSpecError, server.load_data, mock_spec)
+        with pytest.raises(MockSpecError):
+            server.load_file(mock_spec)
         mock_file.assert_called_with(mock_spec, 'r')
+
+    reqresps = [
+        (
+            {
+                'path': '/users/tomlee/todo/123',
+                'request': requests.get,
+                'headers': {'a': '1'},
+                'data': 'Hello World'
+            },
+            {
+                'status': 200,
+                'headers': {
+                    'Content-Type': 'application/json'
+                },
+                'data': {
+                    'user': 'tomlee',
+                    'taskid': '123',
+                    'task': 'Buy milk',
+                    'pri': 'low'
+                },
+            }
+        ),
+        (
+            {
+                'path': '/users/tomlee/todo/123',
+                'request': requests.delete,
+                'headers': {'a': '1'},
+                'data': 'Hello World'
+            },
+            {
+                'status': 410,
+                'headers': {},
+                'data': ''
+            }
+        ),
+        (
+            {
+                'path': '/users/tomlee/todo/',
+                'request': requests.get,
+                'headers': {'a': '1'},
+                'data': 'Hello World'
+            },
+            {
+                'status': 200,
+                'headers': {
+                    'Content-Type': 'application/json'
+                },
+                'data': [
+                    '123', '456', '789'
+                ]
+            }
+        ),
+        (
+            {
+                'path': '/users/tomlee/todo/',
+                'request': requests.post,
+                'headers': {'a': '1'},
+                'data': 'Hello World'
+            },
+            {
+                'status': 200,
+                'headers': {'Content-Type': 'application/json'},
+                'data': {'taskid': "123"}
+            }
+        ),
+        (
+            {
+                'path': '/users/tomlee/profile.xml',
+                'request': requests.get,
+                'headers': {
+                    'Content-Type': 'application/xml'
+                },
+                'data': 'Hello World'
+            },
+            {
+                'status': 200,
+                'headers': {'Content-Type': 'application/xml'},
+                'data': '<profile><user>tomlee</user><org>yam.ai</org><grade>premium</grade></profile>'
+            }
+        ),
+        (
+            {
+                'path': '/users/tomlee/profile.xml',
+                'request': requests.put,
+                'headers': {
+                    'Content-Type': 'application/xml'
+                },
+                'data': 'Hello World'
+            },
+            {
+                'status': 409,
+                'headers': {'Content-Type': 'text/plain'},
+                'data': 'object already updated'
+            }
+        ),
+        (
+            {
+                'path': '/users/tomlee/todo/abc',
+                'request': requests.get,
+                'headers': {},
+                'data': 'Hello World'
+            },
+            {
+                'status': 404,
+                'headers': {},
+                'data': ''
+            }
+        ),
+        (
+            {
+                'path': '/users/tomlee/todo/123',
+                'request': requests.post,
+                'headers': {},
+                'data': 'Hello World'
+            },
+            {
+                'status': 404,
+                'headers': {},
+                'data': ''
+            }
+        ),
+        (
+            {
+                'path': '/users/tomlee/profile',
+                'request': requests.get,
+                'headers': {},
+                'data': 'Hello World'
+            },
+            {
+                'status': 200,
+                'headers': {},
+                'data': 'Hello tomlee'
+            }
+        ),
+        (
+            {
+                'path': '/users/tomlee/profile',
+                'request': requests.post,
+                'headers': {},
+                'data': 'Hello World'
+            },
+            {
+                'status': 200,
+                'headers': {},
+                'data': {'hello': 'tomlee'}
+            }
+        )
+    ]
+
+    @pytest.mark.parametrize('req, resp', reqresps)
+    def test_responses(self, req, resp):
+        response = req['request'](
+            f'http://{HOST}:{PORT}{req["path"]}', headers=req['headers'], data=req['data'])
+        assert response.status_code == resp['status']
+        del response.headers['Server']
+        del response.headers['Date']
+        assert response.headers == resp['headers']
+        respdata = resp['data']
+        if isinstance(respdata, str):
+            assert response.text == respdata
+        else:
+            assert loads(response.text) == respdata

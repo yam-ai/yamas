@@ -66,8 +66,7 @@ class ResponseMaker:
         else:
             self.content_bytes = content.encode('utf-8')
         content_type_header = self.headers.get('Content-Type')
-        if content_type is ContentType.TEXT and (
-                content_type_header is None or content_type_header != ''):
+        if content_type is ContentType.TEXT and content_type_header is None:
             self.headers['Content-Type'] = 'text/plain'
         return
 
@@ -84,7 +83,7 @@ class ResponseMaker:
             except Exception as e:
                 raise MockSpecError(f'Failed to encode dict into JSON {e}')
         content_type_header = self.headers.get('Content-Type')
-        if content_type_header is None or content_type_header != '':
+        if content_type_header is None:
             self.headers['Content-Type'] = 'application/json'
         return
 
@@ -168,7 +167,7 @@ class PatternResponseGenerator(ResponseGenerator):
         self.matchers = OrderedDict()
         return
 
-    def load_from_dict(self, matcher_dict: OrderedDict):
+    def load_dict(self, matcher_dict: OrderedDict):
         for pat, resps in matcher_dict.items():
             try:
                 cpat = re.compile(pat)
@@ -214,12 +213,12 @@ class PatternResponseGenerator(ResponseGenerator):
         return MockResponse(status, headers, content,
                             content_type, interpolate)
 
-    def load_from_json(self, matcher_json: str):
+    def load_json(self, matcher_json: str):
         try:
             matcher_dict = loads(matcher_json, object_pairs_hook=OrderedDict)
         except Exception as e:
             raise MockSpecError(f'Failed to parse JSON: {e}')
-        self.load_from_dict(matcher_dict)
+        self.load_dict(matcher_dict)
         return
 
     def add_matcher(self, pattern: Pattern, method: Method,

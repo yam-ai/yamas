@@ -34,7 +34,7 @@ setup(
         'Programming Language :: Python :: 3.6',
         'Topic :: Software Development :: Testing :: Mocking',
     ],
-    python_requires='>3.6',
+    python_requires='>=3.6',
     keywords='rest api mocking server',
     url='https://github.com/yam-ai/yamas',
     author='Thomas Lee',
@@ -44,5 +44,5 @@ setup(
     scripts=['bin/yamas'],
     packages=find_packages(exclude=['tests']),
     setup_requires=['pytest-runner'],
-    tests_requires=['pytest']
+    tests_requires=['pytest>=5.2.2', 'requests>=2.22.0']
 )
