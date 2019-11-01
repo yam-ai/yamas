@@ -24,7 +24,7 @@ with open(path.join(this_directory, 'README.md'), encoding='utf-8') as f:
 
 setup(
     name='yamas',
-    version='0.1.3',
+    version='0.1.4',
     description='Yamas - Yet Another Mock API Server',
     long_description=long_description,
     long_description_content_type='text/markdown',
@@ -43,6 +43,5 @@ setup(
     zip_safe=True,
     scripts=['bin/yamas'],
     packages=find_packages(exclude=['tests']),
-    setup_requires=['pytest-runner'],
     tests_requires=['pytest>=5.2.2', 'requests>=2.22.0']
 )

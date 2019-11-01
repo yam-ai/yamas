@@ -55,7 +55,7 @@ if __name__ == '__main__':
 
     try:
         server = Yamas()
-        server.load_data(path)
+        server.load_file(path)
         print(f'Loaded mock data file: {path}')
         print(f'Starting server on {ip}:{port}')
         server.run(ip, port)
