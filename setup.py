@@ -39,9 +39,8 @@ setup(
     url='https://github.com/yam-ai/yamas',
     author='Thomas Lee',
     author_email='thomaslee@yam.ai',
-    include_page_data=True,
     zip_safe=True,
     scripts=['bin/yamas'],
     packages=find_packages(exclude=['tests']),
-    tests_requires=['pytest>=5.2.2', 'requests>=2.22.0']
+    tests_require=['pytest>=5.2.2', 'requests>=2.22.0']
 )
