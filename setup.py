@@ -24,7 +24,7 @@ with open(path.join(this_directory, 'README.md'), encoding='utf-8') as f:
 
 setup(
     name='yamas',
-    version='0.1.2',
+    version='0.1.3',
     description='Yamas - Yet Another Mock API Server',
     long_description=long_description,
     long_description_content_type='text/markdown',
@@ -34,7 +34,7 @@ setup(
         'Programming Language :: Python :: 3.6',
         'Topic :: Software Development :: Testing :: Mocking',
     ],
-    python_requires='>3.6',
+    python_requires='>=3.6',
     keywords='rest api mocking server',
     url='https://github.com/yam-ai/yamas',
     author='Thomas Lee',
@@ -42,5 +42,7 @@ setup(
     include_page_data=True,
     zip_safe=True,
     scripts=['bin/yamas'],
-    packages=find_packages(),
+    packages=find_packages(exclude=['tests']),
+    setup_requires=['pytest-runner'],
+    tests_requires=['pytest>=5.2.2', 'requests>=2.22.0']
 )

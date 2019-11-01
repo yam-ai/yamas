@@ -33,28 +33,42 @@ class Method(Enum):
     CONNECT = 'CONNECT'
 
 
+class ContentType(Enum):
+    TEXT = 'text'
+    JSON = 'json'
+
+
 class Request:
-    def __init__(self, path: str, method: Method, headers: dict, body: BufferedIOBase):
+    def __init__(self, path: str, method: Method, headers: dict, content_io: BufferedIOBase):
         self.path = path
         self.method = method
         self.headers = headers
-        self.body = body
+        self.content_io = content_io
+        self.content = None
+        return
 
-    def body_utf8(self) -> str:
+    def content_bytes(self) -> bytes:
+        if not self.content:
+            self.content = self.content_io.read()
+        return self.content
+
+    def content_utf8(self) -> str:
         try:
-            return self.body.read()
+            return self.content_bytes().decode('utf-8')
         except Exception as e:
             raise RequestError(e)
+        return
 
-    def body_json(self) -> str:
+    def content_json(self) -> str:
         try:
-            return loads(self.body_utf8, object_pairs_hook=OrderedDict)
+            return loads(self.content_utf8(), object_pairs_hook=OrderedDict)
         except Exception as e:
             raise RequestError(e)
+        return
 
 
 class Response:
-    def __init__(self, status: HTTPStatus, headers: dict, body_bytes: bytes):
+    def __init__(self, status: HTTPStatus, headers: dict, content_bytes: bytes):
         self.status = status
         self.headers = headers
-        self.body_bytes = body_bytes
+        self.content_bytes = content_bytes
