@@ -18,84 +18,108 @@ from collections import OrderedDict
 from json import loads, dumps
 from http import HTTPStatus
 from typing import Pattern
-from yamas.reqresp import Request, Response, Method
-from yamas.ex import GeneratorError, RequestError, ResponseError
+from yamas.reqresp import Request, Response, Method, ContentType
+from yamas.ex import MockSpecError, RequestError, ResponseError
 
 
 class ResponseMaker:
-    def __init__(self, status: HTTPStatus, headers: dict, body: any, interpolate: bool):
+    def __init__(self, status: HTTPStatus, headers: dict, content: any, content_type: ContentType, interpolate: bool):
         self.status = status
-        self.interpolate = interpolate
+        self.content_type = content_type
         self.headers = headers
-        self.body_bytes = None
+        self.headers = headers if headers is not None else dict()
+        self.content_bytes = None
         self.template = None
-        if not body:
-            if self.interpolate:
-                self.template = ''
-            else:
-                self.body_types = b''
-        elif isinstance(body, str):
-            self.make_body_str(body)
-        elif isinstance(body, dict):
-            self.make_body_dict(body)
-            if not headers:
-                headers = dict()
-            if not headers.get('Content-Type'):
-                headers['Content-Type'] = 'application/json'
-        elif isinstance(body, bytes):
-            self.make_body_bytes(body)
+        self.interpolate = interpolate
+
+        if self.content_type is ContentType.JSON:
+            self.make_content_dict(content)
+        elif content is None or isinstance(content, str):
+            self.make_content_str(content, content_type)
+        elif content is not None:
+            raise MockSpecError(
+                f'Content "{dumps(content)}" is not a string but its type is text or not given')
+        self.process_headers()
         return
 
-    def make_body_str(self, body: str):
-        if self.interpolate:
-            self.template = body
-        else:
-            self.body_bytes = body.encode('utf-8')
+    def process_headers(self):
+        headers_to_delete = []
+        for k, v in self.headers.items():
+            if v is None or v == '':
+                headers_to_delete.append(k)
+            elif not isinstance(v, str):
+                raise MockSpecError(
+                    f'The value for the header {k} must be a string')
+        for k in headers_to_delete:
+            del self.headers[k]
+        return
 
-    def make_body_dict(self, body: dict):
+    def make_content_str(self, content: str, content_type: ContentType):
+        if content is None:
+            content = ''
+        if content == '':
+            self.interpolate = False
+        elif not isinstance('content', str):
+            raise MockSpecError('Text content must be given as a string.')
         if self.interpolate:
-            self.template = body
+            self.template = content
+        else:
+            self.content_bytes = content.encode('utf-8')
+        content_type_header = self.headers.get('Content-Type')
+        if content_type is ContentType.TEXT and content_type_header is None:
+            self.headers['Content-Type'] = 'text/plain'
+        return
+
+    def make_content_dict(self, content: dict):
+        if not content:
+            self.interpolate = False
+            self.content_bytes = b''
+        if self.interpolate:
+            self.template = content
         else:
             try:
-                json_str = dumps(body)
-                self.body_bytes = json_str.encode('utf-8')
-            except Exception:
-                raise ResponseError('Failed to encode dict into JSON')
-
-    def make_body_bytes(self, body: bytes):
-        if interpolate:
-            raise ResponseError('Bytes-type body does not interpolation')
-        self.body_bytes = body
+                json_str = dumps(content)
+                self.content_bytes = json_str.encode('utf-8')
+            except Exception as e:
+                raise MockSpecError(f'Failed to encode dict into JSON {e}')
+        content_type_header = self.headers.get('Content-Type')
+        if content_type_header is None:
+            self.headers['Content-Type'] = 'application/json'
+        return
 
     @staticmethod
-    def format_body_template(template_item: any, vars: tuple) -> any:
+    def format_content_template(template_item: any, vars: tuple) -> any:
         if isinstance(template_item, str):
             return template_item.format(*vars)
         if isinstance(template_item, dict):
-            body_dict = OrderedDict()
+            content_dict = OrderedDict()
             for k, v in template_item.items():
-                body_dict[k] = ResponseMaker.format_body_template(v, vars)
-            return body_dict
+                content_dict[k] = ResponseMaker.format_content_template(
+                    v, vars)
+            return content_dict
         if isinstance(template_item, list):
-            body_list = []
-            for v in body_list:
-                body_list.append(ResponseMaker.format_body_template(v, vars))
-            return body_list
+            content_list = []
+            for v in content_list:
+                content_list.append(
+                    ResponseMaker.format_content_template(v, vars))
+            return content_list
         return template_item
 
     def make_response(self, groups: tuple) -> Response:
         if not self.interpolate:
-            return Response(self.status, self.headers, self.body_bytes)
+            return Response(self.status, self.headers, self.content_bytes)
         try:
-            formatted_body = ResponseMaker.format_body_template(
+            formatted_content = ResponseMaker.format_content_template(
                 self.template, groups)
-            if isinstance(formatted_body, str):
-                body_bytes = formatted_body.encode('utf-8')
+            if self.content_type is ContentType.JSON:
+                content_bytes = dumps(formatted_content).encode('utf-8')
             else:
-                body_bytes = dumps(formatted_body).encode('utf-8')
+                content_bytes = formatted_content.encode('utf-8')
         except Exception as e:
-            return Response(HTTPStatus.INTERNAL_SERVER_ERROR, {'Content-Type': 'text/plain'}, str(e).encode('utf-8'))
-        return Response(self.status, self.headers, body_bytes)
+            return Response(HTTPStatus.INTERNAL_SERVER_ERROR,
+                            {'Content-Type': 'text/plain'},
+                            str(e).encode('utf-8'))
+        return Response(self.status, self.headers, content_bytes)
 
 
 class ResponseGenerator:
@@ -105,7 +129,7 @@ class ResponseGenerator:
 
 
 class ResponseSelector:
-    def __init__(self, loop=False):
+    def __init__(self, loop):
         self.response_makers = []
         self.loop = loop
         self.idx = 0
@@ -114,92 +138,108 @@ class ResponseSelector:
         self.response_makers.append(response_maker)
         return
 
-    def select_response_maker(self, groups):
+    def make_response(self, groups):
         if not self.response_makers:
-            return None
+            return Response(HTTPStatus.NOT_FOUND, {}, b'')
         num_response_makers = len(self.response_makers)
         if self.idx >= num_response_makers:
             self.idx == 0
         response_maker = self.response_makers[self.idx]
-        self.idx + 1
         if self.loop:
             self.idx = (self.idx + 1) % num_response_makers
         else:
-            self.idx = min(self.idx, num_response_makers - 1)
+            self.idx = min(self.idx + 1, num_response_makers - 1)
         return response_maker.make_response(groups)
 
 
-class PatternResponseGenerator(ResponseGenerator):
+class MockResponse:
+    def __init__(self, status: HTTPStatus, headers: dict, content: any, content_type: ContentType, interpolate: bool):
+        self.status = status
+        self.headers = headers
+        self.content = content
+        self.content_type = content_type
+        self.interpolate = interpolate
 
-    class MockResponse:
-        def __init__(self, status: HTTPStatus, headers: dict, body: any, interpolate: bool):
-            self.status = status
-            self.headers = headers
-            self.body = body
-            self.interpolate = interpolate
+
+class PatternResponseGenerator(ResponseGenerator):
 
     def __init__(self):
         self.matchers = OrderedDict()
         return
 
-    def load_from_dict(self, matcher_dict: OrderedDict):
+    def load_dict(self, matcher_dict: OrderedDict):
         for pat, resps in matcher_dict.items():
             try:
                 cpat = re.compile(pat)
             except:
-                raise GeneratorError(f'Failed to compile pattern {pat}')
+                raise MockSpecError(f'Failed to compile pattern {pat}')
             for method in list(Method):
                 resp = resps.get(method.value)
                 if not resp:
                     continue
-                mock_response = PatternResponseGenerator.parse_mock_response(
-                    resp)
+                try:
+                    mock_response = PatternResponseGenerator.parse_mock_response(
+                        resp)
+                except MockSpecError as e:
+                    raise MockSpecError(
+                        f'Error parsing mock responses for pattern {pat} and {method.value}: {e}')
                 self.add_matcher(cpat, method, mock_response)
         return
 
-    @classmethod
-    def parse_mock_response(cls, resp: dict) -> MockResponse:
+    @staticmethod
+    def parse_mock_response(resp: dict) -> MockResponse:
         status_code = resp['status'] if 'status' in resp else 200
         try:
             status = HTTPStatus(status_code)
         except:
-            raise GeneratorError(f'Unrecognized status code {status_code}')
+            raise MockSpecError(f'Unrecognized status code {status_code}')
         headers = resp.get('headers')
-        body = resp.get('body')
+        content = resp.get('content')
         interpolate = resp.get('interpolate')
+        content_type_str = resp.get('contentType')
+        if content_type_str:
+            try:
+                content_type = ContentType(content_type_str)
+            except Exception:
+                raise MockSpecError(
+                    f'Unsupported contenntType {content_type_str}')
+        else:
+            content_type = None
         if interpolate is None:
             interpolate = False
         elif not isinstance(interpolate, bool):
-            raise GeneratorError(
+            raise MockSpecError(
                 f'The interpolate field must be boolean')
-        return cls.MockResponse(status, headers, body, interpolate)
+        return MockResponse(status, headers, content,
+                            content_type, interpolate)
 
-    def load_from_json(self, matcher_json: str):
+    def load_json(self, matcher_json: str):
         try:
             matcher_dict = loads(matcher_json, object_pairs_hook=OrderedDict)
         except Exception as e:
-            raise GeneratorError(f'Failed to parse JSON: {e}')
-        self.load_from_dict(matcher_dict)
+            raise MockSpecError(f'Failed to parse JSON: {e}')
+        self.load_dict(matcher_dict)
         return
 
     def add_matcher(self, pattern: Pattern, method: Method,
                     mock_response: MockResponse):
         respsel_dict = self.matchers.get(pattern)
         if not respsel_dict:
-            respsel_dict = {method: ResponseSelector()
+            respsel_dict = {method: ResponseSelector(loop=False)
                             for method in list(Method)}
             self.matchers[pattern] = respsel_dict
         respsel_dict[method].add_response_maker(
             ResponseMaker(mock_response.status, mock_response.headers,
-                          mock_response.body, mock_response.interpolate))
+                          mock_response.content, mock_response.content_type, mock_response.interpolate))
 
     def respond(self, request: Request) -> Response:
         for cpat, respsel_dict in self.matchers.items():
             match = cpat.fullmatch(request.path)
             if match:
-                respsel = respsel_dict[request.method]
+                respsel = respsel_dict.get(request.method)
                 if respsel:
-                    return respsel.select_response_maker(match.groups())
+                    resp = respsel.make_response(match.groups())
+                    return resp
                 else:
                     break
-        return Response(HTTPStatus.NOT_FOUND, {}, None)
+        return Response(HTTPStatus.NOT_FOUND, {}, b'')

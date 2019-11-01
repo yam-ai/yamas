@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+
 class YamasException(Exception):
     pass
 
@@ -25,8 +26,9 @@ class RequestError(YamasException):
     pass
 
 
-class GeneratorError(YamasException):
+class MockSpecError(YamasException):
     pass
+
 
 class ServerError(YamasException):
     pass

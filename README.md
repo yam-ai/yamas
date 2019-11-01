@@ -8,10 +8,10 @@ The mock responses and the rules of selecting them are specified in a JSON file.
 
 ## Usage
 
-Yamas has been published to [PyPI](https://pypi.org). You can use `pip3` to install Yamas:
+Yamas has been published to [PyPI](https://pypi.org). You can use `pip` to install Yamas:
 
 ```sh
-pip3 install yamas
+pip install yamas
 ```
 
 The command-line interface of Yamas is as follows:
@@ -29,6 +29,19 @@ For example,
 yamas.py -e localhost:8000 -f mock_responses.json
 ```
 
+To run Yamas using the source code under the project root directory (e.g., `/home/yam/git/yamas`):
+
+```sh
+export PYTHONPATH=/home/yam/git/yamas
+bin/yamas
+```
+
+To run the tests:
+
+```sh
+python -m pytest tests/
+```
+
 ## Specification of mock responses
 
 The mock responses and the rules of selecting them are specified in a JSON file, which is given on the command line. A sample specification is given as follows:
@@ -38,21 +51,35 @@ The mock responses and the rules of selecting them are specified in a JSON file,
     "^/users/(\\w+)/todo/(\\d+)$": {
         "GET": {
             "status": 200,
-            "body": {
+            "content": {
                 "user": "{0}",
                 "taskid": "{1}",
                 "task": "Buy milk",
                 "pri": "low"
             },
+            "contentType": "json",
             "interpolate": true
         },
         "DELETE": {
             "status": 410
         }
     },
-    "^/users/\\w+/todo/?$": {
+    "^/users/\\w+/todo/?": {
+        "GET": {
+            "status": 200,
+            "content": [
+                "123",
+                "456",
+                "789"
+            ],
+            "contentType": "json"
+        },
         "POST": {
-            "taskid": 123
+            "content": {
+                "taskid": "123"
+            },
+            "contentType": "json",
+            "interpolate": false
         }
     },
     "^/users/(\\w+)/profile.xml$": {
@@ -61,15 +88,14 @@ The mock responses and the rules of selecting them are specified in a JSON file,
             "headers": {
                 "Content-Type": "application/xml"
             },
-            "body": "<profile><user>{0}</user><org>yam.ai</org><grade>premium</grade></profile>",
+            "content": "<profile><user>{0}</user><org>yam.ai</org><grade>premium</grade></profile>",
+            "contentType": "text",
             "interpolate": true
         },
         "PUT": {
             "status": 409,
-            "headers": {
-                "Content-Type": "text/plain"
-            },
-            "body": "object already updated"
+            "content": "object already updated",
+            "contentType": "text"
         }
     }
 }
@@ -84,9 +110,13 @@ When the request path matches the regular expression in a key, the corresponding
 The mock response object contains the following:
 
 * `status` specifies the status code of the response. If `status` is not specified, `200 OK` will be used.
-* `headers` specifies a JSON object containing the header names and values. If there are no user-defined headers, `headers` can be omitted.
-* `body` specifies the body of the response. Its value can be either a JSON object or a string. If the value is a JSON object, the response body will be the same JSON object. The `Content-Type: application/json` header will be automatically added unless it is overrided by a different `Content-Type` header specified in the `headers` value. If the value is a string, the response body will be a [UTF-8](https://en.wikipedia.org/wiki/UTF-8) text.
-* `interpolate` specifies whether the matched values of the capturing groups in the request path will be inserted into the body string. It is `false` by default. When `interpolate` is `true`, every string value in `body` is expected to be a [Python format string](https://docs.python.org/3.6/library/string.html#format-string-syntax). If `body` is a string, the value is treated as a format string. If the `body` is a JSON object, every string value in the object is treated as a format string. In the first format string of the the above example, `{0}` will be substituted with the matched value of the first capturing group in the regular expression (i.e., `(\w+)`), `{1}` will be substituted with the value of the second matched capturing group (i.e., `(\d+)` ). Note the special character `\` in a regular expression needs to be escaped as `\\`.
+* `headers` specifies a JSON object containing the header names and values. If there are no user-defined headers, `headers` can be omitted. If the value of a header is an empty string, the corresponding header, which may be automatically added, (e.g., `Content-Type`) will be remoed.
+* `content` specifies the content of the response. Its value should match its `contentType`.
+* `contentType` specifies the data type of the content. The following types can be used:
+  * `text`: `content` must be a string of the [UTF-8](https://en.wikipedia.org/wiki/UTF-8) text content. The header `Content-Type: text/plain` will be automatically added unless it is overriden by a user-specified `Content-Type` header.
+  * `json`: `content` is treated as a JSON value. The header `Content-Type: application/json` will be automatically added unless it is overriden by a user-specified `Content-Type` header.
+  * `contentType` is omitted: `content` is treated as a `text` type except the header `Content-Type: text/plain` is not automatically added.
+* `interpolate` specifies whether the matched values of the capturing groups in the request path will be inserted into the content. It is `false` by default. When `interpolate` is `true`, every string value in `content` is expected to be a [Python format string](https://docs.python.org/3.6/library/string.html#format-string-syntax). If `content` is `text`, the value is treated as a format string. If the `content` is `json`, every string value in the object is treated as a format string. In the first format string of the the above example, `{0}` will be substituted with the matched value of the first capturing group in the regular expression (i.e., `(\w+)`), `{1}` will be substituted with the value of the second matched capturing group (i.e., `(\d+)` ). Note the special characters, such as `\`, `{`, `}`, in a regular expression need to be escaped as `\\`, `{{`, `}}`.
 
 ## Professional services
 

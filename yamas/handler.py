@@ -37,8 +37,8 @@ class MockRequestHandler(BaseHTTPRequestHandler):
             for k, v in response.headers.items():
                 self.send_header(k, v)
         self.end_headers()
-        if response.body_bytes:
-            self.wfile.write(response.body_bytes)
+        if response.content_bytes:
+            self.wfile.write(response.content_bytes)
         return
 
     def do_GET(self):
