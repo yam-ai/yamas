@@ -8,10 +8,10 @@ The mock responses and the rules of selecting them are specified in a JSON file.
 
 ## Usage
 
-Yamas has been published to [PyPI](https://pypi.org). You can use `pip3` to install Yamas:
+Yamas has been published to [PyPI](https://pypi.org). You can use `pip` to install Yamas:
 
 ```sh
-pip3 install yamas
+pip install yamas
 ```
 
 The command-line interface of Yamas is as follows:
@@ -27,6 +27,19 @@ For example,
 
 ```sh
 yamas.py -e localhost:8000 -f mock_responses.json
+```
+
+To run Yamas using the source code under the project root directory (e.g., `/home/yam/git/yamas`):
+
+```sh
+export PYTHONPATH=/home/yam/git/yamas
+bin/yamas
+```
+
+To run the tests:
+
+```sh
+python -m pytest tests/
 ```
 
 ## Specification of mock responses
