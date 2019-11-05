@@ -24,90 +24,106 @@ from yamas.ex import MockSpecError
 
 
 prg_valid_json = PatternResponseGenerator()
-prg_valid_json.load_json(dumps(
+prg_valid_json.load_spec_json(dumps(
     {
-        '^/users/(\\w+)/todo/(\\d+)$': {
-            'GET': {
-                'status': 200,
-                'content': {
-                    'user': '{0}',
-                    'taskid': '{1}',
-                    'task': 'Buy milk',
-                    'pri': 'low'
-                },
-                'contentType': 'json',
-                'interpolate': True
+        'global': {
+            'headers': {
+                'Access-Control-Allow-Origin': '*'
             },
-            'DELETE': {
-                'status': 410
-            }
+            'server': 'YetAnotherMockAPIServer 0.0.1'
         },
-        '^/users/\\w+/todo/?$': {
-            'GET': {
-                'status': 200,
-                'content': ['123', '456', '789'],
-                'contentType': 'json'
+        'matchers': {
+
+            '^/users/(\\w+)/todo/(\\d+)$': {
+                'GET': {
+                    'status': 200,
+                    'content': {
+                        'user': '{0}',
+                        'taskid': '{1}',
+                        'task': 'Buy milk',
+                        'pri': 'low'
+                    },
+                    'contentType': 'json',
+                    'interpolate': True
+                },
+                'DELETE': {
+                    'status': 410
+                }
             },
-            'POST': {
-                'content': {
-                    'taskid': '123'
+            '^/users/\\w+/todo/?$': {
+                'GET': {
+                    'status': 200,
+                    'content': ['123', '456', '789'],
+                    'contentType': 'json'
                 },
-                'contentType': 'json',
-                'interpolate': False
-            }
-        },
-        '^/users/(\\w+)/profile.xml$': {
-            'GET': {
-                'status': 200,
-                'headers': {
-                    'Content-Type': 'application/xml'
-                },
-                'content': '<profile><user>{0}</user><org>yam.ai</org><grade>premium</grade></profile>',
-                'interpolate': True
+                'POST': {
+                    'content': {
+                        'taskid': '123'
+                    },
+                    'contentType': 'json',
+                    'interpolate': False
+                }
             },
-            'PUT': {
-                'status': 409,
-                'content': 'object already updated',
-                'contentType': 'text'
-            }
-        },
-        '^/users/(\\w+)/profile$': {
-            'GET': {
-                'status': 200,
-                'headers': {
-                    'Content-Type': ''
+            '^/users/(\\w+)/profile.xml$': {
+                'GET': {
+                    'status': 200,
+                    'headers': {
+                        'Content-Type': 'application/xml'
+                    },
+                    'content': '<profile><user>{0}</user><org>yam.ai</org><grade>premium</grade></profile>',
+                    'interpolate': True
                 },
-                'content': 'Hello {0}',
-                'contentType': 'text',
-                'interpolate': True
+                'PUT': {
+                    'status': 409,
+                    'content': 'object already updated',
+                    'contentType': 'text'
+                }
             },
-            'POST': {
-                'status': 200,
-                'headers': {
-                    'Content-Type': ''
+            '^/users/(\\w+)/profile$': {
+                'GET': {
+                    'status': 200,
+                    'headers': {
+                        'Content-Type': ''
+                    },
+                    'content': 'Hello {0}',
+                    'contentType': 'text',
+                    'interpolate': True
                 },
-                'content': {'hello': '{0}'},
-                'contentType': 'json',
-                'interpolate': True
+                'POST': {
+                    'status': 200,
+                    'headers': {
+                        'Content-Type': ''
+                    },
+                    'content': {'hello': '{0}'},
+                    'contentType': 'json',
+                    'interpolate': True
+                }
             }
         }
     }))
 
 prg_for_testing_interpolation = PatternResponseGenerator()
-prg_for_testing_interpolation.load_dict(
+prg_for_testing_interpolation.load_spec_dict(
     {
-        '^/hello/(\\w)+$': {
-            'GET': {
-                'status': 200,
-                'content': 'hello {0} and {1}',
-                'interpolate': True
-            }
+        'global': {
+            'headers': {'b': '2', 'c': '3'},
+            'server': 'abc'
         },
-        '^/hello/(\\w)+/world/(\\d)+$': {
-            'POST': {
-                'status': 200,
-                'content': 'hello {0}',
-                'interpolate': True
+        'matchers': {
+            '^/hello/(\\w)+$': {
+                'GET': {
+                    'status': 200,
+                    'content': 'hello {0} and {1}',
+                    'interpolate': True,
+                    'headers': {'a': 'one', 'b': 'two'}
+                }
+            },
+            '^/hello/(\\w)+/world/(\\d)+$': {
+                'POST': {
+                    'status': 200,
+                    'content': 'hello {0}',
+                    'interpolate': True
+                }
             }
         }
     }
@@ -127,7 +143,8 @@ class TestPatternResponseGenerator:
             {
                 'status': 200,
                 'headers': {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
+                    'Access-Control-Allow-Origin': '*',
                 },
                 'content_bytes': dumps({
                     'user': 'tomlee',
@@ -146,7 +163,9 @@ class TestPatternResponseGenerator:
             },
             {
                 'status': 410,
-                'headers': {},
+                'headers': {
+                    'Access-Control-Allow-Origin': '*',
+                },
                 'content_bytes': b'',
             }
         ),
@@ -160,7 +179,7 @@ class TestPatternResponseGenerator:
             {
                 'status': 200,
                 'headers': {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
                 },
                 'content_bytes': dumps([
                     '123', '456', '789'
@@ -176,7 +195,10 @@ class TestPatternResponseGenerator:
             },
             {
                 'status': 200,
-                'headers': {'Content-Type': 'application/json'},
+                'headers': {
+                    'Content-Type': 'application/json',
+                    'Access-Control-Allow-Origin': '*',
+                },
                 'content_bytes': dumps({
                     'taskid': "123"
                 }).encode('utf-8'),
@@ -187,13 +209,17 @@ class TestPatternResponseGenerator:
                 'path': '/users/tomlee/profile.xml',
                 'method': Method.GET,
                 'headers': {
-                    'Content-Type': 'application/xml'
+                    'Content-Type': 'application/xml',
+                    'Access-Control-Allow-Origin': '*',
                 },
                 'content_io': BytesIO(b'Hello World')
             },
             {
                 'status': 200,
-                'headers': {'Content-Type': 'application/xml'},
+                'headers': {
+                    'Content-Type': 'application/xml',
+                    'Access-Control-Allow-Origin': '*',
+                },
                 'content_bytes': b'<profile><user>tomlee</user><org>yam.ai</org><grade>premium</grade></profile>'
             }
         ),
@@ -202,13 +228,18 @@ class TestPatternResponseGenerator:
                 'path': '/users/tomlee/profile.xml',
                 'method': Method.PUT,
                 'headers': {
-                    'Content-Type': 'xml/plain'
+                    'Content-Type': 'xml/plain',
+                    'Access-Control-Allow-Origin': '*',
                 },
                 'content_io': BytesIO(b'Hello World')
             },
             {
                 'status': 409,
-                'headers': {'Content-Type': 'text/plain'},
+                'headers': {
+                    'b': '2', 'c': '3',
+                    'Content-Type': 'text/plain',
+                    'Access-Control-Allow-Origin': '*',
+                },
                 'content_bytes': b'object already updated'
             }
         ),
@@ -221,7 +252,9 @@ class TestPatternResponseGenerator:
             },
             {
                 'status': 404,
-                'headers': {},
+                'headers': {
+                    'Access-Control-Allow-Origin': '*',
+                },
                 'content_bytes': b''
             }
         ),
@@ -234,7 +267,9 @@ class TestPatternResponseGenerator:
             },
             {
                 'status': 404,
-                'headers': {},
+                'headers': {
+                    'Access-Control-Allow-Origin': '*',
+                },
                 'content_bytes': b''
             }
         ),
@@ -246,7 +281,9 @@ class TestPatternResponseGenerator:
             },
             {
                 'status': 200,
-                'headers': {},
+                'headers': {
+                    'Access-Control-Allow-Origin': '*',
+                },
                 'content_bytes': b'Hello tomlee'
             }
         ),
@@ -280,69 +317,87 @@ class TestPatternResponseGenerator:
 
     invalid_mocks = [
         {
-            '(': {
-                'GET': {
-                    'status': 200
+            'matchers': {
+                '(': {
+                    'GET': {
+                        'status': 200
+                    }
                 }
             }
         },
         {
-            '/abc': {
-                'GET': {
-                    'status': 200,
-                    'content': 'abc',
-                    'contentType': 'str'
+            'matchers': {
+                '/abc': {
+                    'GET': {
+                        'status': 200,
+                        'content': 'abc',
+                        'contentType': 'str'
+                    }
                 }
             }
         },
         {
-            '/abc': {
-                'GET': {
-                    'status': 777,
+            'matchers': {
+                '/abc': {
+                    'GET': {
+                        'status': 777,
+                    }
                 }
             }
         },
         {
-            '/abc': {
-                'GET': {
-                    'content': 123,
-                    'contentType': 'text'
+            'matchers': {
+                '/abc': {
+                    'GET': {
+                        'content': 123,
+                        'contentType': 'text'
+                    }
                 }
             }
         },
         {
-            '/abc': {
-                'GET': {
-                    'content': {'x': 1},
-                    'contentType': 'text'
+            'matchers': {
+                '/abc': {
+                    'GET': {
+                        'content': {'x': 1},
+                        'contentType': 'text'
+                    }
                 }
             }
         },
         {
-            '/abc': {
-                'GET': {
-                    'content': 123
+            'matchers': {
+                '/abc': {
+                    'GET': {
+                        'content': 123
+                    }
                 }
             }
         },
         {
-            '/abc': {
-                'GET': {
-                    'content': {'x': 1},
+            'matchers': {
+                '/abc': {
+                    'GET': {
+                        'content': {'x': 1},
+                    }
                 }
             }
         },
         {
-            '/abc': {
-                'GET': {
-                    'headers': {'x': 1},
+            'matchers': {
+                '/abc': {
+                    'GET': {
+                        'headers': {'x': 1},
+                    }
                 }
             }
         },
         {
-            '/abc': {
-                'GET': {
-                    'headers': {'x': {'y': '1'}},
+            'matchers': {
+                '/abc': {
+                    'GET': {
+                        'headers': {'x': {'y': '1'}},
+                    }
                 }
             }
         }
@@ -353,12 +408,12 @@ class TestPatternResponseGenerator:
         mock_json = dumps(mock)
         prg = PatternResponseGenerator()
         with pytest.raises(MockSpecError):
-            prg.load_json(mock_json)
+            prg.load_spec_json(mock_json)
 
     def test_malformed_mock_json(self):
         prg = PatternResponseGenerator()
         with pytest.raises(MockSpecError):
-            prg.load_json('I am not json')
+            prg.load_spec_json('I am not json')
 
     not_found_resps = [
         {

@@ -22,28 +22,32 @@ from yamas.reqresp import Request, Response, Method, ContentType
 from yamas.ex import MockSpecError, RequestError, ResponseError
 from copy import copy, deepcopy
 
+
 def check_headers(headers: dict):
-    if headers.get('Server') or headers.get('server'):
-        raise MockSpecError(f'Server header should only be given in the global server field')
+    if headers.get('Server'):
+        raise MockSpecError(
+            f'Server header should only be given in the global server field')
     for k, v in headers.items():
         if not isinstance(k, str):
             raise MockSpecError(f'Header key {k} must be a string')
         if not isinstance(v, str):
             raise MockSpecError(f'Header value {v} must be a string')
 
+
 class ResponseMaker:
     def __init__(self, status: HTTPStatus, headers: dict, content: any, content_type: ContentType, interpolate: bool, global_headers: dict):
         self.status = status
         self.content_type = content_type
-        self.headers = copy(global_headers)
+        self.headers = copy(
+            global_headers) if global_headers is not None else OrderedDict()
+        check_headers(self.headers)
         if headers:
-            check_headers(headers)
-        for h in headers:
-            self.headers[h] = headers[h]
+            for h in headers:
+                self.headers[h] = headers[h]
         self.content_bytes = None
         self.template = None
         self.interpolate = interpolate
-        
+
         if self.content_type is ContentType.JSON:
             self.make_content_dict(content)
         elif content is None or isinstance(content, str):
@@ -172,6 +176,7 @@ class MockResponse:
         self.content_type = content_type
         self.interpolate = interpolate
 
+
 class PatternResponseGenerator(ResponseGenerator):
 
     def __init__(self):
@@ -199,8 +204,8 @@ class PatternResponseGenerator(ResponseGenerator):
             self.server_header = global_dict.get('serverHeader')
         matcher_dict = spec_dict.get('matchers')
         if matcher_dict:
-            self.load_dict(matcher_matcher_dict)
-            
+            self.load_matcher_dict(matcher_dict)
+
     def load_matcher_dict(self, matcher_dict: OrderedDict):
         for pat, resps in matcher_dict.items():
             try:
@@ -246,7 +251,6 @@ class PatternResponseGenerator(ResponseGenerator):
                 f'The interpolate field must be boolean')
         return MockResponse(status, headers, content,
                             content_type, interpolate)
-
 
     def add_matcher(self, pattern: Pattern, method: Method,
                     mock_response: MockResponse):
