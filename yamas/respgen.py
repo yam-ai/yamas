@@ -20,18 +20,30 @@ from http import HTTPStatus
 from typing import Pattern
 from yamas.reqresp import Request, Response, Method, ContentType
 from yamas.ex import MockSpecError, RequestError, ResponseError
+from copy import copy, deepcopy
 
+def check_headers(headers: dict):
+    if headers.get('Server') or headers.get('server'):
+        raise MockSpecError(f'Server header should only be given in the global server field')
+    for k, v in headers.items():
+        if not isinstance(k, str):
+            raise MockSpecError(f'Header key {k} must be a string')
+        if not isinstance(v, str):
+            raise MockSpecError(f'Header value {v} must be a string')
 
 class ResponseMaker:
-    def __init__(self, status: HTTPStatus, headers: dict, content: any, content_type: ContentType, interpolate: bool):
+    def __init__(self, status: HTTPStatus, headers: dict, content: any, content_type: ContentType, interpolate: bool, global_headers: dict):
         self.status = status
         self.content_type = content_type
-        self.headers = headers
-        self.headers = headers if headers is not None else dict()
+        self.headers = copy(global_headers)
+        if headers:
+            check_headers(headers)
+        for h in headers:
+            self.headers[h] = headers[h]
         self.content_bytes = None
         self.template = None
         self.interpolate = interpolate
-
+        
         if self.content_type is ContentType.JSON:
             self.make_content_dict(content)
         elif content is None or isinstance(content, str):
@@ -160,14 +172,36 @@ class MockResponse:
         self.content_type = content_type
         self.interpolate = interpolate
 
-
 class PatternResponseGenerator(ResponseGenerator):
 
     def __init__(self):
         self.matchers = OrderedDict()
+        self.global_headers = OrderedDict()
+        self.server_header = None
         return
 
-    def load_dict(self, matcher_dict: OrderedDict):
+    def load_spec_json(self, spec_json: str):
+        try:
+            spec_dict = loads(spec_json, object_pairs_hook=OrderedDict)
+        except Exception as e:
+            raise MockSpecError(f'Failed to parse JSON: {e}')
+        self.load_spec_dict(spec_dict)
+        return
+
+    def load_spec_dict(self, spec_dict: dict):
+        global_dict = spec_dict.get('global')
+        if global_dict:
+            global_headers = global_dict.get('headers')
+            if global_headers:
+                check_headers(global_headers)
+                for header in global_headers:
+                    self.global_headers[header] = global_headers[header]
+            self.server_header = global_dict.get('serverHeader')
+        matcher_dict = spec_dict.get('matchers')
+        if matcher_dict:
+            self.load_dict(matcher_matcher_dict)
+            
+    def load_matcher_dict(self, matcher_dict: OrderedDict):
         for pat, resps in matcher_dict.items():
             try:
                 cpat = re.compile(pat)
@@ -213,13 +247,6 @@ class PatternResponseGenerator(ResponseGenerator):
         return MockResponse(status, headers, content,
                             content_type, interpolate)
 
-    def load_json(self, matcher_json: str):
-        try:
-            matcher_dict = loads(matcher_json, object_pairs_hook=OrderedDict)
-        except Exception as e:
-            raise MockSpecError(f'Failed to parse JSON: {e}')
-        self.load_dict(matcher_dict)
-        return
 
     def add_matcher(self, pattern: Pattern, method: Method,
                     mock_response: MockResponse):
@@ -230,7 +257,8 @@ class PatternResponseGenerator(ResponseGenerator):
             self.matchers[pattern] = respsel_dict
         respsel_dict[method].add_response_maker(
             ResponseMaker(mock_response.status, mock_response.headers,
-                          mock_response.content, mock_response.content_type, mock_response.interpolate))
+                          mock_response.content, mock_response.content_type,
+                          mock_response.interpolate, self.global_headers))
 
     def respond(self, request: Request) -> Response:
         for cpat, respsel_dict in self.matchers.items():
