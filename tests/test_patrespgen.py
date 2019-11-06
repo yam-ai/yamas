@@ -30,7 +30,7 @@ prg_valid_json.load_spec_json(dumps(
             'headers': {
                 'Access-Control-Allow-Origin': '*'
             },
-            'server': 'YetAnotherMockAPIServer 0.0.1'
+            'serverHeader': 'YetAnotherMockAPIServer 0.0.1'
         },
         'matchers': {
 
@@ -107,7 +107,7 @@ prg_for_testing_interpolation.load_spec_dict(
     {
         'global': {
             'headers': {'b': '2', 'c': '3'},
-            'server': 'abc'
+            'serverHeader': 'abc'
         },
         'matchers': {
             '^/hello/(\\w)+$': {
@@ -316,6 +316,28 @@ class TestPatternResponseGenerator:
         assert actual_resp.content_bytes == resp['content_bytes']
 
     invalid_mocks = [
+        {
+            'global': {
+                'headers': { 'x': 1 }
+            }
+        },
+        {
+            'matchers': {
+                '.*': {
+                    'GET': { 'headers': { 'x': 1 } }
+                }
+            }
+        },
+        {
+            'global': {
+                'headers': { 'Server': 'x' }
+            }
+        },
+        {
+            'global': {
+                'serverHeader': 1
+            }
+        },
         {
             'matchers': {
                 '(': {

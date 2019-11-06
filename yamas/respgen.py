@@ -26,7 +26,7 @@ from copy import copy, deepcopy
 def check_headers(headers: dict):
     if headers.get('Server'):
         raise MockSpecError(
-            f'Server header should only be given in the global server field')
+            f'Server header should only be given as a global field')
     for k, v in headers.items():
         if not isinstance(k, str):
             raise MockSpecError(f'Header key {k} must be a string')
@@ -202,6 +202,9 @@ class PatternResponseGenerator(ResponseGenerator):
                 for header in global_headers:
                     self.global_headers[header] = global_headers[header]
             self.server_header = global_dict.get('serverHeader')
+            if self.server_header is not None and \
+                not isinstance(self.server_header, str):
+                raise MockSpecError(f'Server header must be a string if given')
         matcher_dict = spec_dict.get('matchers')
         if matcher_dict:
             self.load_matcher_dict(matcher_dict)
