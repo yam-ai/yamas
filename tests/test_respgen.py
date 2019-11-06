@@ -38,8 +38,8 @@ prg_valid_json.load_spec_json(dumps(
                 'GET': {
                     'status': 200,
                     'content': {
-                        'user': '{0}',
-                        'taskid': '{1}',
+                        'user': '$p0',
+                        'taskid': '$p1',
                         'task': 'Buy milk',
                         'pri': 'low'
                     },
@@ -70,7 +70,7 @@ prg_valid_json.load_spec_json(dumps(
                     'headers': {
                         'Content-Type': 'application/xml'
                     },
-                    'content': '<profile><user>{0}</user><org>yam.ai</org><grade>premium</grade></profile>',
+                    'content': '<profile><user>$p0</user><org>yam.ai</org><grade>premium</grade></profile>',
                     'interpolate': True
                 },
                 'PUT': {
@@ -85,7 +85,7 @@ prg_valid_json.load_spec_json(dumps(
                     'headers': {
                         'Content-Type': ''
                     },
-                    'content': 'Hello {0}',
+                    'content': 'Hello $p0',
                     'contentType': 'text',
                     'interpolate': True
                 },
@@ -94,7 +94,7 @@ prg_valid_json.load_spec_json(dumps(
                     'headers': {
                         'Content-Type': ''
                     },
-                    'content': {'hello': '{0}'},
+                    'content': {'hello': '$p0'},
                     'contentType': 'json',
                     'interpolate': True
                 }
@@ -113,7 +113,7 @@ prg_for_testing_interpolation.load_spec_dict(
             '^/hello/(\\w)+$': {
                 'GET': {
                     'status': 200,
-                    'content': 'hello {0} and {1}',
+                    'content': 'hello $p0 and $p1',
                     'interpolate': True,
                     'headers': {'a': 'one', 'b': 'two'}
                 }
@@ -121,7 +121,7 @@ prg_for_testing_interpolation.load_spec_dict(
             '^/hello/(\\w)+/world/(\\d)+$': {
                 'POST': {
                     'status': 200,
-                    'content': 'hello {0}',
+                    'content': 'hello $p0',
                     'interpolate': True
                 }
             }
@@ -343,7 +343,7 @@ class TestPatternResponseGenerator:
             'rules': {
                 '.*': {
                     'GET': {
-                        'content': '{0}',
+                        'content': '$p0',
                         'interpolate': 'not boolean' 
                     }
                 }

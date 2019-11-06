@@ -34,8 +34,8 @@ VALID_JSON = '''
             "GET": {
                 "status": 200,
                 "content": {
-                    "user": "{0}",
-                    "taskid": "{1}",
+                    "user": "$p0",
+                    "taskid": "$p1",
                     "task": "Buy milk",
                     "pri": "low"
                 },
@@ -70,7 +70,7 @@ VALID_JSON = '''
                 "headers": {
                     "Content-Type": "application/xml"
                 },
-                "content": "<profile><user>{0}</user><org>yam.ai</org><grade>premium</grade></profile>",
+                "content": "<profile><user>$p0</user><org>yam.ai</org><grade>premium</grade></profile>",
                 "contentType": "text",
                 "interpolate": true
             },
@@ -86,7 +86,7 @@ VALID_JSON = '''
                 "headers": {
                     "Content-Type": ""
                 },
-                "content": "Hello {0}",
+                "content": "Hello $p0",
                 "contentType": "text",
                 "interpolate": true
             },
@@ -95,7 +95,7 @@ VALID_JSON = '''
                 "headers": {
                     "Content-Type": ""
                 },
-                "content": {"hello": "{0}"},
+                "content": {"hello": "$p0"},
                 "contentType": "json",
                 "interpolate": true
             }

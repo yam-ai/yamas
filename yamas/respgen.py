@@ -22,6 +22,7 @@ from yamas.reqresp import Request, Response, Method, ContentType
 from yamas.ex import MockSpecError, RequestError, ResponseError
 from copy import copy, deepcopy
 from jsonschema import validate
+from string import Template
 
 spec_schema = {
     'title': 'Yamas Specification',
@@ -190,7 +191,10 @@ class ResponseMaker:
     @staticmethod
     def format_content_template(template_item: any, vars: tuple) -> any:
         if isinstance(template_item, str):
-            return template_item.format(*vars)
+            kv = dict()
+            for i, v in enumerate(vars):
+                kv[f'p{i}'] = v
+            return Template(template_item).substitute(kv)
         if isinstance(template_item, dict):
             content_dict = OrderedDict()
             for k, v in template_item.items():

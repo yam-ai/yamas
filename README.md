@@ -48,64 +48,98 @@ The mock responses and the rules of selecting them are specified in a JSON file,
 
 ```json
 {
-    "^/users/(\\w+)/todo/(\\d+)$": {
-        "GET": {
-            "status": 200,
-            "content": {
-                "user": "{0}",
-                "taskid": "{1}",
-                "task": "Buy milk",
-                "pri": "low"
-            },
-            "contentType": "json",
-            "interpolate": true
+    "global": {
+        "headers": {
+            "Access-Control-Allow-Origin": "*"
         },
-        "DELETE": {
-            "status": 410
-        }
+        "serverHeader": "YetAnotherMockAPIServer 0.0.1"
     },
-    "^/users/\\w+/todo/?": {
-        "GET": {
-            "status": 200,
-            "content": [
-                "123",
-                "456",
-                "789"
-            ],
-            "contentType": "json"
-        },
-        "POST": {
-            "content": {
-                "taskid": "123"
+    "rules": {
+        "^/users/(\\w+)/todo/(\\d+)$": {
+            "GET": {
+                "status": 200,
+                "content": {
+                    "user": "$p0",
+                    "taskid": "$p1",
+                    "task": "Buy milk",
+                    "pri": "low"
+                },
+                "contentType": "json",
+                "interpolate": true
             },
-            "contentType": "json",
-            "interpolate": false
-        }
-    },
-    "^/users/(\\w+)/profile.xml$": {
-        "GET": {
-            "status": 200,
-            "headers": {
-                "Content-Type": "application/xml"
-            },
-            "content": "<profile><user>{0}</user><org>yam.ai</org><grade>premium</grade></profile>",
-            "contentType": "text",
-            "interpolate": true
+            "DELETE": {
+                "status": 410
+            }
         },
-        "PUT": {
-            "status": 409,
-            "content": "object already updated",
-            "contentType": "text"
+        "^/users/\\w+/todo/?": {
+            "GET": {
+                "status": 200,
+                "content": [
+                    "123",
+                    "456",
+                    "789"
+                ],
+                "contentType": "json"
+            },
+            "POST": {
+                "content": {
+                    "taskid": "123"
+                },
+                "contentType": "json",
+                "interpolate": false
+            }
+        },
+        "^/users/(\\w+)/profile.xml$": {
+            "GET": {
+                "status": 200,
+                "headers": {
+                    "Content-Type": "application/xml"
+                },
+                "content": "<profile><user>$p0</user><org>yam.ai</org><grade>premium</grade></profile>",
+                "contentType": "text",
+                "interpolate": true
+            },
+            "PUT": {
+                "status": 409,
+                "content": "object already updated",
+                "contentType": "text"
+            }
+        },
+        "^/users/(\\w+)/profile$": {
+            "GET": {
+                "status": 200,
+                "headers": {
+                    "Content-Type": ""
+                },
+                "content": "Hello $p0",
+                "contentType": "text",
+                "interpolate": true
+            },
+            "POST": {
+                "status": 200,
+                "headers": {
+                    "Content-Type": ""
+                },
+                "content": {
+                    "hello": "$p0"
+                },
+                "contentType": "json",
+                "interpolate": true
+            }
         }
     }
 }
 ```
 
-The root level is a JSON object. Inside the root object, the keys are [Python regular expressions](https://docs.python.org/3.6/howto/regex.html) and the associated values are JSON ojbects. The regular expressions are used to match the request path. The JSON object value specifies the mock responses for each HTTP method. The matching is done in the order of the keys specified in the file. In other words, a key is selected one by one from the top to the bottom and its regular expression is used to match the request path.
+The root level is a JSON object. Inside the root object, there are optional objects `global` and `rules`.
 
-When the request path matches the regular expression of a key, the associated JSON object specifying the mock responses associated with the HTTP methods will be selected. When the request path does not match the regular expression, the regular expression in the next key will be selected. If the request path matches no regular expression, a [404 Not Found](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status) response will be replied.
+Under `global`, there are optional objects `headers` and `serverHeader`. The `headers` object specifies the default headers to be included in the response to each request matching any of the rules specified below. The `serverHeader` field gives a string value that customizes the default `Server` header.
 
-When the request path matches the regular expression in a key, the corresponding JSON object value will be used to construct the response. Inside this JSON object, the keys are [HTTP methods](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods). The JSON object corresponding to each HTTP method key specifies a mock response.
+The `rules` object maps the pattern ([Python regular expressions](https://docs.python.org/3.6/howto/regex.html) ) of the path of an HTTP request (i.e., key) to the mock response for each HTTP method (i.e., value). The matching is done in the order of the keys specified in the file. In other words, a key is selected one by one from the top to the bottom and its regular expression is used to match the request path.
+
+When the request path matches the pattern of a key, the associated JSON object specifying the mock responses associated with the HTTP methods will be selected. When the request path does not match the regular expression, the regular expression in the next key will be selected. If the request path matches no regular expression, a [404 Not Found](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status) response will be replied.
+
+When the path of a request matches the regular expression in a key, the corresponding JSON object value will be used to construct the response. Inside this JSON object, the keys are [HTTP methods](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods). The JSON object corresponding to each HTTP method key specifies a mock response.
 
 The mock response object contains the following:
 
@@ -116,7 +150,7 @@ The mock response object contains the following:
   * `text`: `content` must be a string of the [UTF-8](https://en.wikipedia.org/wiki/UTF-8) text content. The header `Content-Type: text/plain` will be automatically added unless it is overriden by a user-specified `Content-Type` header.
   * `json`: `content` is treated as a JSON value. The header `Content-Type: application/json` will be automatically added unless it is overriden by a user-specified `Content-Type` header.
   * `contentType` is omitted: `content` is treated as a `text` type except the header `Content-Type: text/plain` is not automatically added.
-* `interpolate` specifies whether the matched values of the capturing groups in the request path will be inserted into the content. It is `false` by default. When `interpolate` is `true`, every string value in `content` is expected to be a [Python format string](https://docs.python.org/3.6/library/string.html#format-string-syntax). If `content` is `text`, the value is treated as a format string. If the `content` is `json`, every string value in the object is treated as a format string. In the first format string of the the above example, `{0}` will be substituted with the matched value of the first capturing group in the regular expression (i.e., `(\w+)`), `{1}` will be substituted with the value of the second matched capturing group (i.e., `(\d+)` ). Note the special characters, such as `\`, `{`, `}`, in a regular expression need to be escaped as `\\`, `{{`, `}}`.
+* `interpolate` specifies whether the matched values of the capturing groups in the request path will be inserted into the content. It is `false` by default. When `interpolate` is `true`, every string value in `content` is expected to be a [Python template string](https://docs.python.org/3/library/string.html#template-strings). If `content` is `text`, the value is treated as a format string. If the `content` is `json`, every string value in the object is treated as a temolate string. In the first format string of the the above example, `$p`*n* will be substituted with the matched value of the *n*-th capturing group in the path pattern. As in the above example, `$p0` will be substituted with the matched value of the first capturing group `(\w+)` in the pattern path `^/users/(\\w+)/todo/(\\d+)$`, `$p1` will be substituted with the value of the second matched capturing group `(\d+)`. Note: the special character `$` should be escaped as `$$`.
 
 ## Professional services
 
