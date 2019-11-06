@@ -29,7 +29,7 @@ VALID_JSON = '''
         },
         "serverHeader": "YetAnotherMockAPIServer 0.0.1"
     },
-    "matchers": {
+    "rules": {
         "^/users/(\\\\w+)/todo/(\\\\d+)$": {
             "GET": {
                 "status": 200,

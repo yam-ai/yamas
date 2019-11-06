@@ -32,7 +32,7 @@ prg_valid_json.load_spec_json(dumps(
             },
             'serverHeader': 'YetAnotherMockAPIServer 0.0.1'
         },
-        'matchers': {
+        'rules': {
 
             '^/users/(\\w+)/todo/(\\d+)$': {
                 'GET': {
@@ -109,7 +109,7 @@ prg_for_testing_interpolation.load_spec_dict(
             'headers': {'b': '2', 'c': '3'},
             'serverHeader': 'abc'
         },
-        'matchers': {
+        'rules': {
             '^/hello/(\\w)+$': {
                 'GET': {
                     'status': 200,
@@ -318,19 +318,19 @@ class TestPatternResponseGenerator:
     invalid_mocks = [
         {
             'global': {
-                'headers': { 'x': 1 }
+                'headers': {'x': 1}
             }
         },
         {
-            'matchers': {
+            'rules': {
                 '.*': {
-                    'GET': { 'headers': { 'x': 1 } }
+                    'GET': {'headers': {'x': 1}}
                 }
             }
         },
         {
             'global': {
-                'headers': { 'Server': 'x' }
+                'headers': {'Server': 'x'}
             }
         },
         {
@@ -339,7 +339,7 @@ class TestPatternResponseGenerator:
             }
         },
         {
-            'matchers': {
+            'rules': {
                 '(': {
                     'GET': {
                         'status': 200
@@ -348,7 +348,7 @@ class TestPatternResponseGenerator:
             }
         },
         {
-            'matchers': {
+            'rules': {
                 '/abc': {
                     'GET': {
                         'status': 200,
@@ -359,7 +359,7 @@ class TestPatternResponseGenerator:
             }
         },
         {
-            'matchers': {
+            'rules': {
                 '/abc': {
                     'GET': {
                         'status': 777,
@@ -368,7 +368,7 @@ class TestPatternResponseGenerator:
             }
         },
         {
-            'matchers': {
+            'rules': {
                 '/abc': {
                     'GET': {
                         'content': 123,
@@ -378,7 +378,7 @@ class TestPatternResponseGenerator:
             }
         },
         {
-            'matchers': {
+            'rules': {
                 '/abc': {
                     'GET': {
                         'content': {'x': 1},
@@ -388,7 +388,7 @@ class TestPatternResponseGenerator:
             }
         },
         {
-            'matchers': {
+            'rules': {
                 '/abc': {
                     'GET': {
                         'content': 123
@@ -397,7 +397,7 @@ class TestPatternResponseGenerator:
             }
         },
         {
-            'matchers': {
+            'rules': {
                 '/abc': {
                     'GET': {
                         'content': {'x': 1},
@@ -406,7 +406,7 @@ class TestPatternResponseGenerator:
             }
         },
         {
-            'matchers': {
+            'rules': {
                 '/abc': {
                     'GET': {
                         'headers': {'x': 1},
@@ -415,7 +415,7 @@ class TestPatternResponseGenerator:
             }
         },
         {
-            'matchers': {
+            'rules': {
                 '/abc': {
                     'GET': {
                         'headers': {'x': {'y': '1'}},

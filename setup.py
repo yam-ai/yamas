@@ -42,5 +42,6 @@ setup(
     zip_safe=True,
     scripts=['bin/yamas'],
     packages=find_packages(exclude=['tests']),
-    tests_require=['pytest>=5.2.2', 'requests>=2.22.0']
+    install_requires=['jsonschema>=3.1.1,<3.2.0'],
+    tests_require=['pytest>=5.2.2,<5.3.0', 'requests>=2.22.0,<2.23.0']
 )
