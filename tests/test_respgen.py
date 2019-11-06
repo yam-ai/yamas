@@ -317,6 +317,17 @@ class TestPatternResponseGenerator:
 
     invalid_mocks = [
         {
+            'not_permitted': {}
+        },
+        {
+            'rules': {
+                '.*': {
+                    'NOTSUPPORTED': {}
+                }
+            }
+
+        },
+        {
             'global': {
                 'headers': {'x': 1}
             }
@@ -324,7 +335,35 @@ class TestPatternResponseGenerator:
         {
             'rules': {
                 '.*': {
-                    'GET': {'headers': {'x': 1}}
+                    'GET': {'headers': {'x': True}}
+                }
+            }
+        },
+        {
+            'rules': {
+                '.*': {
+                    'GET': {
+                        'content': '{0}',
+                        'interpolate': 'not boolean' 
+                    }
+                }
+            }
+        },
+        {
+            'rules': {
+                '.*': {
+                    'GET': {
+                        'status': 99
+                    }
+                }
+            }
+        },
+        {
+            'rules': {
+                '.*': {
+                    'GET': {
+                        'status': 600
+                    }
                 }
             }
         },
@@ -336,6 +375,11 @@ class TestPatternResponseGenerator:
         {
             'global': {
                 'serverHeader': 1
+            }
+        },        
+        {
+            'global': {
+                'serverHeader': ''
             }
         },
         {

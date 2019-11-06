@@ -31,7 +31,7 @@ spec_schema = {
         'global': {
             'description': 'Global parameters',
             'type': 'object',
-            'properites': {
+            'properties': {
                 'headers': {
                     'description': 'Default HTTP headers',
                     'type': 'object',
@@ -107,7 +107,8 @@ spec_schema = {
                 }
             }
         }
-    }
+    },
+    'additionalProperties': False
 }
 
 
@@ -115,11 +116,6 @@ def check_headers(headers: dict):
     if headers.get('Server'):
         raise MockSpecError(
             f'Server header should only be given as a global field')
-    for k, v in headers.items():
-        if not isinstance(k, str):
-            raise MockSpecError(f'Header key {k} must be a string')
-        if not isinstance(v, str):
-            raise MockSpecError(f'Header value {v} must be a string')
 
 
 class ResponseMaker:
