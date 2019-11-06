@@ -29,8 +29,8 @@ class Yamas:
     def make_handler_class(name: str, respgen: ResponseGenerator) -> Callable:
         handler_class = type(name, (MockRequestHandler,), {'respgen': respgen})
         if respgen.server_header:
-            handler_class.server_version = respgen.server_header
             handler_class.server_version = ''
+            handler_class.sys_version = respgen.server_header
         else:
             handler_class.server_version = SERVER_HEADER
             handler_class.sys_version = SYS_VERSION
@@ -49,6 +49,7 @@ class Yamas:
 
     def load_json(self, spec_json: str):
         self.respgen.load_spec_json(spec_json)
+        
 
     def load_dict(self, spec_dict: dict):
         self.respgen.load_spec_dict(spec_dict)

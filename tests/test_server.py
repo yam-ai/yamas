@@ -27,7 +27,7 @@ VALID_JSON = '''
         "headers": {
                 "Access-Control-Allow-Origin": "*"
         },
-        "server": "YetAnotherMockAPIServer 0.0.1"
+        "serverHeader": "YetAnotherMockAPIServer 0.0.1"
     },
     "matchers": {
         "^/users/(\\\\w+)/todo/(\\\\d+)$": {
@@ -308,6 +308,7 @@ class TestYamas:
         response = req['request'](
             f'http://{HOST}:{PORT}{req["path"]}', headers=req['headers'], data=req['data'])
         assert response.status_code == resp['status']
+        assert response.headers['Server'] == "YetAnotherMockAPIServer 0.0.1"
         del response.headers['Server']
         del response.headers['Date']
         assert response.headers == resp['headers']
