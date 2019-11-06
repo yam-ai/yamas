@@ -23,7 +23,7 @@ import pytest
 class TestResponseSelector:
 
     respmakers = [
-        ResponseMaker(HTTPStatus.OK, {}, str(i), ContentType.TEXT, False)
+        ResponseMaker(HTTPStatus.OK, {}, str(i), ContentType.TEXT, False, {})
         for i in range(3)
     ]
     respsels = []
