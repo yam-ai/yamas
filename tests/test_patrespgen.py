@@ -180,6 +180,7 @@ class TestPatternResponseGenerator:
                 'status': 200,
                 'headers': {
                     'Content-Type': 'application/json',
+                    'Access-Control-Allow-Origin': '*',
                 },
                 'content_bytes': dumps([
                     '123', '456', '789'
@@ -236,7 +237,6 @@ class TestPatternResponseGenerator:
             {
                 'status': 409,
                 'headers': {
-                    'b': '2', 'c': '3',
                     'Content-Type': 'text/plain',
                     'Access-Control-Allow-Origin': '*',
                 },
@@ -253,7 +253,6 @@ class TestPatternResponseGenerator:
             {
                 'status': 404,
                 'headers': {
-                    'Access-Control-Allow-Origin': '*',
                 },
                 'content_bytes': b''
             }
@@ -268,7 +267,6 @@ class TestPatternResponseGenerator:
             {
                 'status': 404,
                 'headers': {
-                    'Access-Control-Allow-Origin': '*',
                 },
                 'content_bytes': b''
             }
@@ -295,7 +293,9 @@ class TestPatternResponseGenerator:
             },
             {
                 'status': 200,
-                'headers': {},
+                'headers': {
+                    'Access-Control-Allow-Origin': '*',
+                },
                 'content_bytes': dumps({'hello': 'tomlee'}).encode('utf-8')
             }
         )

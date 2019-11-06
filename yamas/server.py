@@ -48,10 +48,10 @@ class Yamas:
         return
 
     def load_json(self, spec_json: str):
-        self.respgen.load_json(spec_json)
+        self.respgen.load_spec_json(spec_json)
 
     def load_dict(self, spec_dict: dict):
-        self.respgen.load_dict(spec_dict)
+        self.respgen.load_spec_dict(spec_dict)
         self.server_header = self.respgen.server_header
         return
 
