@@ -49,7 +49,7 @@ VALID_JSON = '''
                 "status": 410
             }
         },
-        "^/users/\\\\w+/todo/?": {
+        "^/users/\\\\w+/todo/?$": {
             "GET": {
                 "status": 200,
                 "content": [
