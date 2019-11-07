@@ -32,7 +32,6 @@ yamas -e localhost:8000 -f mock_responses.json
 To run Yamas using the source code under the project root directory (e.g., `/home/yam/git/yamas`):
 
 ```sh
-export PYTHONPATH=/home/yam/git/yamas
 pip install .
 yamas -e localhost:8000 -f data/mock_responses.json
 ```
@@ -151,7 +150,7 @@ The mock response object contains the following:
   * `text`: `content` must be a string of the [UTF-8](https://en.wikipedia.org/wiki/UTF-8) text content. The header `Content-Type: text/plain` will be automatically added unless it is overriden by a user-specified `Content-Type` header.
   * `json`: `content` is treated as a JSON value. The header `Content-Type: application/json` will be automatically added unless it is overriden by a user-specified `Content-Type` header.
   * `contentType` is omitted: `content` is treated as `text` except the header `Content-Type: text/plain` is not automatically added.
-* `interpolate` specifies whether the matched values of the capturing groups in the request path will replace the placeholders the content template. It is `false` by default. When `interpolate` is `true`, every string value in `content` is expected to be a [Python template string](https://docs.python.org/3/library/string.html#template-strings). If `content` is `text`, the value is treated as a template. If the `content` is `json`, every string value in the object is treated as a template. As shown in the the above example, the placeholder `$p`*`n`* will be replaced with the matched value of the *n*-th capturing group in the request path pattern. As in the above example, `$p0` will be substituted with the matched value of the first capturing group `(\w+)` in the pattern path `^/users/(\w+)/todo/(\d+)$`, `$p1` will be substituted with the value of the second matched capturing group `(\d+)`. Note: the special character `$` should be escaped as `$$`.
+* `interpolate` specifies whether the matched values of the capturing groups in the request path will replace the placeholders in the content template. It is `false` by default. When `interpolate` is `true`, every string value in `content` is expected to be a [Python template string](https://docs.python.org/3/library/string.html#template-strings). If `content` is `text`, the value is treated as a template. If the `content` is `json`, every string value in the object is treated as a template. As shown in the the above example, the placeholder `$p`*`n`* will be replaced with the matched value of the *n*-th capturing group in the request path pattern. As in the above example, `$p0` will be substituted with the matched value of the first capturing group `(\w+)` in the pattern path `^/users/(\w+)/todo/(\d+)$`, `$p1` will be substituted with the value of the second matched capturing group `(\d+)`. Note: the special character `$` should be escaped as `$$`.
 
 ## Professional services
 
