@@ -28,7 +28,7 @@ from copy import deepcopy, copy
 class TestResponseMaker:
     HEADERS = {'a': '1', 'b': '2'}
     GLOBAL_HEADERS = { 'b':  'two', 'c' :  'three' }
-    CONTENT_DICT = {'x': '{0}', 'y': '{1}'}
+    CONTENT_DICT = {'x': '$p0', 'y': '$p1'}
     CONTENT_STR = dumps(CONTENT_DICT)
     CONTENT_BYTES = CONTENT_STR.encode('utf-8')
     HEADERS_WITH_JSON_TYPE = copy(GLOBAL_HEADERS)

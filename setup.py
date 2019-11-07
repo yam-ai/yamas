@@ -15,6 +15,7 @@
 # limitations under the License.
 
 from setuptools import setup, find_packages
+from yamas.config import VERSION
 
 from os import path
 
@@ -24,7 +25,7 @@ with open(path.join(this_directory, 'README.md'), encoding='utf-8') as f:
 
 setup(
     name='yamas',
-    version='0.1.4',
+    version=VERSION,
     description='Yamas - Yet Another Mock API Server',
     long_description=long_description,
     long_description_content_type='text/markdown',
@@ -42,5 +43,6 @@ setup(
     zip_safe=True,
     scripts=['bin/yamas'],
     packages=find_packages(exclude=['tests']),
-    tests_require=['pytest>=5.2.2', 'requests>=2.22.0']
+    install_requires=['jsonschema>=3.1.1,<3.2.0'],
+    tests_require=['pytest>=5.2.2,<5.3.0', 'requests>=2.22.0,<2.23.0']
 )

@@ -32,14 +32,14 @@ prg_valid_json.load_spec_json(dumps(
             },
             'serverHeader': 'YetAnotherMockAPIServer 0.0.1'
         },
-        'matchers': {
+        'rules': {
 
             '^/users/(\\w+)/todo/(\\d+)$': {
                 'GET': {
                     'status': 200,
                     'content': {
-                        'user': '{0}',
-                        'taskid': '{1}',
+                        'user': '$p0',
+                        'taskid': '$p1',
                         'task': 'Buy milk',
                         'pri': 'low'
                     },
@@ -70,7 +70,7 @@ prg_valid_json.load_spec_json(dumps(
                     'headers': {
                         'Content-Type': 'application/xml'
                     },
-                    'content': '<profile><user>{0}</user><org>yam.ai</org><grade>premium</grade></profile>',
+                    'content': '<profile><user>$p0</user><org>yam.ai</org><grade>premium</grade></profile>',
                     'interpolate': True
                 },
                 'PUT': {
@@ -85,7 +85,7 @@ prg_valid_json.load_spec_json(dumps(
                     'headers': {
                         'Content-Type': ''
                     },
-                    'content': 'Hello {0}',
+                    'content': 'Hello $p0',
                     'contentType': 'text',
                     'interpolate': True
                 },
@@ -94,7 +94,7 @@ prg_valid_json.load_spec_json(dumps(
                     'headers': {
                         'Content-Type': ''
                     },
-                    'content': {'hello': '{0}'},
+                    'content': {'hello': '$p0'},
                     'contentType': 'json',
                     'interpolate': True
                 }
@@ -109,11 +109,11 @@ prg_for_testing_interpolation.load_spec_dict(
             'headers': {'b': '2', 'c': '3'},
             'serverHeader': 'abc'
         },
-        'matchers': {
+        'rules': {
             '^/hello/(\\w)+$': {
                 'GET': {
                     'status': 200,
-                    'content': 'hello {0} and {1}',
+                    'content': 'hello $p0 and $p1',
                     'interpolate': True,
                     'headers': {'a': 'one', 'b': 'two'}
                 }
@@ -121,7 +121,7 @@ prg_for_testing_interpolation.load_spec_dict(
             '^/hello/(\\w)+/world/(\\d)+$': {
                 'POST': {
                     'status': 200,
-                    'content': 'hello {0}',
+                    'content': 'hello $p0',
                     'interpolate': True
                 }
             }
@@ -317,29 +317,73 @@ class TestPatternResponseGenerator:
 
     invalid_mocks = [
         {
+            'not_permitted': {}
+        },
+        {
+            'rules': {
+                '.*': {
+                    'NOTSUPPORTED': {}
+                }
+            }
+
+        },
+        {
             'global': {
-                'headers': { 'x': 1 }
+                'headers': {'x': 1}
             }
         },
         {
-            'matchers': {
+            'rules': {
                 '.*': {
-                    'GET': { 'headers': { 'x': 1 } }
+                    'GET': {'headers': {'x': True}}
+                }
+            }
+        },
+        {
+            'rules': {
+                '.*': {
+                    'GET': {
+                        'content': '$p0',
+                        'interpolate': 'not boolean' 
+                    }
+                }
+            }
+        },
+        {
+            'rules': {
+                '.*': {
+                    'GET': {
+                        'status': 99
+                    }
+                }
+            }
+        },
+        {
+            'rules': {
+                '.*': {
+                    'GET': {
+                        'status': 600
+                    }
                 }
             }
         },
         {
             'global': {
-                'headers': { 'Server': 'x' }
+                'headers': {'Server': 'x'}
             }
         },
         {
             'global': {
                 'serverHeader': 1
             }
+        },        
+        {
+            'global': {
+                'serverHeader': ''
+            }
         },
         {
-            'matchers': {
+            'rules': {
                 '(': {
                     'GET': {
                         'status': 200
@@ -348,7 +392,7 @@ class TestPatternResponseGenerator:
             }
         },
         {
-            'matchers': {
+            'rules': {
                 '/abc': {
                     'GET': {
                         'status': 200,
@@ -359,7 +403,7 @@ class TestPatternResponseGenerator:
             }
         },
         {
-            'matchers': {
+            'rules': {
                 '/abc': {
                     'GET': {
                         'status': 777,
@@ -368,7 +412,7 @@ class TestPatternResponseGenerator:
             }
         },
         {
-            'matchers': {
+            'rules': {
                 '/abc': {
                     'GET': {
                         'content': 123,
@@ -378,7 +422,7 @@ class TestPatternResponseGenerator:
             }
         },
         {
-            'matchers': {
+            'rules': {
                 '/abc': {
                     'GET': {
                         'content': {'x': 1},
@@ -388,7 +432,7 @@ class TestPatternResponseGenerator:
             }
         },
         {
-            'matchers': {
+            'rules': {
                 '/abc': {
                     'GET': {
                         'content': 123
@@ -397,7 +441,7 @@ class TestPatternResponseGenerator:
             }
         },
         {
-            'matchers': {
+            'rules': {
                 '/abc': {
                     'GET': {
                         'content': {'x': 1},
@@ -406,7 +450,7 @@ class TestPatternResponseGenerator:
             }
         },
         {
-            'matchers': {
+            'rules': {
                 '/abc': {
                     'GET': {
                         'headers': {'x': 1},
@@ -415,7 +459,7 @@ class TestPatternResponseGenerator:
             }
         },
         {
-            'matchers': {
+            'rules': {
                 '/abc': {
                     'GET': {
                         'headers': {'x': {'y': '1'}},
