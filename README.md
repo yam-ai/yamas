@@ -17,7 +17,7 @@ pip install yamas
 The command-line interface of Yamas is as follows:
 
 ```sh
-yamas [-e|--endpoint host:port] -f|--file mock_responses_file
+yamas [-e|--endpoint host:port] -f|--file mock_responses_spec
 ```
 
 * `-e` or `--endpoint` specifies the host address and the port number of the endpoint; if this is not specified, `127.0.0.1:7000` will be used.
