@@ -1,0 +1,2 @@
+VERSION = '0.2.0'
+SERVER_NAME = 'Yamas'

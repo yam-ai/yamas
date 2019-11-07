@@ -20,77 +20,88 @@ from yamas.ex import MockSpecError
 from threading import Thread
 from json import loads
 import requests
+from yamas.config import SERVER_NAME, VERSION
+import logging
+LOGGER = logging.getLogger(__name__)
 
 VALID_JSON = '''
 {
-    "^/users/(\\\\w+)/todo/(\\\\d+)$": {
-        "GET": {
-            "status": 200,
-            "content": {
-                "user": "{0}",
-                "taskid": "{1}",
-                "task": "Buy milk",
-                "pri": "low"
-            },
-            "contentType": "json",
-            "interpolate": true
+    "global": {
+        "headers": {
+                "Access-Control-Allow-Origin": "*"
         },
-        "DELETE": {
-            "status": 410
-        }
+        "serverHeader": "YetAnotherMockAPIServer 0.0.1"
     },
-    "^/users/\\\\w+/todo/?": {
-        "GET": {
-            "status": 200,
-            "content": [
-                "123",
-                "456",
-                "789"
-            ],
-            "contentType": "json"
+    "rules": {
+        "^/users/(\\\\w+)/todo/(\\\\d+)$": {
+            "GET": {
+                "status": 200,
+                "content": {
+                    "user": "$p0",
+                    "taskid": "$p1",
+                    "task": "Buy milk",
+                    "pri": "low"
+                },
+                "contentType": "json",
+                "interpolate": true
+            },
+            "DELETE": {
+                "status": 410
+            }
         },
-        "POST": {
-            "content": {
-                "taskid": "123"
+        "^/users/\\\\w+/todo/?": {
+            "GET": {
+                "status": 200,
+                "content": [
+                    "123",
+                    "456",
+                    "789"
+                ],
+                "contentType": "json"
             },
-            "contentType": "json",
-            "interpolate": false
-        }
-    },
-    "^/users/(\\\\w+)/profile.xml$": {
-        "GET": {
-            "status": 200,
-            "headers": {
-                "Content-Type": "application/xml"
-            },
-            "content": "<profile><user>{0}</user><org>yam.ai</org><grade>premium</grade></profile>",
-            "contentType": "text",
-            "interpolate": true
+            "POST": {
+                "content": {
+                    "taskid": "123"
+                },
+                "contentType": "json",
+                "interpolate": false
+            }
         },
-        "PUT": {
-            "status": 409,
-            "content": "object already updated",
-            "contentType": "text"
-        }
-    },
-    "^/users/(\\\\w+)/profile$": {
-        "GET": {
-            "status": 200,
-            "headers": {
-                "Content-Type": ""
+        "^/users/(\\\\w+)/profile.xml$": {
+            "GET": {
+                "status": 200,
+                "headers": {
+                    "Content-Type": "application/xml"
+                },
+                "content": "<profile><user>$p0</user><org>yam.ai</org><grade>premium</grade></profile>",
+                "contentType": "text",
+                "interpolate": true
             },
-            "content": "Hello {0}",
-            "contentType": "text",
-            "interpolate": true
+            "PUT": {
+                "status": 409,
+                "content": "object already updated",
+                "contentType": "text"
+            }
         },
-        "POST": {
-            "status": 200,
-            "headers": {
-                "Content-Type": ""
+        "^/users/(\\\\w+)/profile$": {
+            "GET": {
+                "status": 200,
+                "headers": {
+                    "Content-Type": ""
+                },
+                "content": "Hello $p0",
+                "contentType": "text",
+                "interpolate": true
             },
-            "content": {"hello": "{0}"},
-            "contentType": "json",
-            "interpolate": true
+            "POST": {
+                "status": 200,
+                "headers": {
+                    "Content-Type": ""
+                },
+                "content": {"hello": "$p0"},
+                "contentType": "json",
+                "interpolate": true
+            }
         }
     }
 }
@@ -98,8 +109,30 @@ VALID_JSON = '''
 
 INVALID_JSON = 'this is not a json'
 
+HELLO_JSON = '''
+{ 
+    "global": {
+        "headers": {
+            "Access-Control-Allow-Origin": "*"
+        }
+    },
+    "rules": {
+        "^/hello/(\\\\w+)$": {
+            "GET": {
+                "status": 201,
+                "headers": { "X-Hello": "World" },
+                "contentType": "text",
+                "content": "Hello, $p0",
+                "interpolate": true
+            }
+        }
+    }
+}
+'''
+
 HOST = 'localhost'
 PORT = 7777
+PORT2 = 6666
 
 
 @pytest.fixture(scope='session', autouse=True)
@@ -109,11 +142,31 @@ def yamas():
     thread = Thread(target=server.run, args=(HOST, PORT))
     thread.daemon = True
     thread.start()
-    print(f'Yamas test server is running on {HOST}:{PORT}')
     return server
 
 
 class TestYamas:
+
+    @patch('builtins.open', new_callable=mock_open, read_data=HELLO_JSON)
+    def test_hello_world(self, mock_file):
+        mock_spec = '/some/mock/response/json'
+        server = Yamas()
+        server.load_file(mock_spec)
+        mock_file.assert_called_with(mock_spec, 'r')
+        thread = Thread(target=server.run, args=(HOST, PORT2))
+        thread.daemon = True
+        thread.start()
+        response = requests.get(
+            f'http://{HOST}:{PORT2}/hello/world', headers={}, data={})
+        del response.headers['Date']
+        assert response.headers == {
+            'Server': f'{SERVER_NAME} {VERSION}',
+            'X-Hello': 'World',
+            'Access-Control-Allow-Origin': '*',
+            'Content-Type': 'text/plain'
+        }
+        assert response.status_code == 201
+        assert response.content == b'Hello, world'
 
     @patch('builtins.open', new_callable=mock_open, read_data=VALID_JSON)
     def test_load_file(self, mock_file):
@@ -141,7 +194,8 @@ class TestYamas:
             {
                 'status': 200,
                 'headers': {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
+                    'Access-Control-Allow-Origin': '*',
                 },
                 'data': {
                     'user': 'tomlee',
@@ -160,7 +214,9 @@ class TestYamas:
             },
             {
                 'status': 410,
-                'headers': {},
+                'headers': {
+                    'Access-Control-Allow-Origin': '*',
+                },
                 'data': ''
             }
         ),
@@ -174,7 +230,8 @@ class TestYamas:
             {
                 'status': 200,
                 'headers': {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
+                    'Access-Control-Allow-Origin': '*',
                 },
                 'data': [
                     '123', '456', '789'
@@ -190,7 +247,10 @@ class TestYamas:
             },
             {
                 'status': 200,
-                'headers': {'Content-Type': 'application/json'},
+                'headers': {
+                    'Content-Type': 'application/json',
+                    'Access-Control-Allow-Origin': '*',
+                },
                 'data': {'taskid': "123"}
             }
         ),
@@ -205,7 +265,10 @@ class TestYamas:
             },
             {
                 'status': 200,
-                'headers': {'Content-Type': 'application/xml'},
+                'headers': {
+                    'Content-Type': 'application/xml',
+                    'Access-Control-Allow-Origin': '*',
+                },
                 'data': '<profile><user>tomlee</user><org>yam.ai</org><grade>premium</grade></profile>'
             }
         ),
@@ -220,7 +283,10 @@ class TestYamas:
             },
             {
                 'status': 409,
-                'headers': {'Content-Type': 'text/plain'},
+                'headers': {
+                    'Content-Type': 'text/plain',
+                    'Access-Control-Allow-Origin': '*',
+                },
                 'data': 'object already updated'
             }
         ),
@@ -259,7 +325,9 @@ class TestYamas:
             },
             {
                 'status': 200,
-                'headers': {},
+                'headers': {
+                    'Access-Control-Allow-Origin': '*',
+                },
                 'data': 'Hello tomlee'
             }
         ),
@@ -272,7 +340,9 @@ class TestYamas:
             },
             {
                 'status': 200,
-                'headers': {},
+                'headers': {
+                    'Access-Control-Allow-Origin': '*',
+                },
                 'data': {'hello': 'tomlee'}
             }
         )
@@ -283,6 +353,7 @@ class TestYamas:
         response = req['request'](
             f'http://{HOST}:{PORT}{req["path"]}', headers=req['headers'], data=req['data'])
         assert response.status_code == resp['status']
+        assert response.headers['Server'] == "YetAnotherMockAPIServer 0.0.1"
         del response.headers['Server']
         del response.headers['Date']
         assert response.headers == resp['headers']

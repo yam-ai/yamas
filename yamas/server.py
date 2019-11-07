@@ -18,9 +18,7 @@ from typing import Callable
 from yamas.respgen import Method, ResponseGenerator, PatternResponseGenerator
 from yamas.handler import MockRequestHandler
 from yamas.ex import MockSpecError, ServerError
-
-SERVER_HEADER = 'yamas'
-SYS_VERSION = '0.1'
+from yamas.config import VERSION, SERVER_NAME
 
 
 class Yamas:
@@ -28,25 +26,31 @@ class Yamas:
     @staticmethod
     def make_handler_class(name: str, respgen: ResponseGenerator) -> Callable:
         handler_class = type(name, (MockRequestHandler,), {'respgen': respgen})
-        handler_class.server_version = SERVER_HEADER
-        handler_class.sys_version = SYS_VERSION
+        if respgen.server_header:
+            handler_class.server_version = ''
+            handler_class.sys_version = respgen.server_header
+        else:
+            handler_class.server_version = SERVER_NAME
+            handler_class.sys_version = VERSION
         return handler_class
 
     def __init__(self):
         self.respgen = PatternResponseGenerator()
+        self.server_header = None
         return
 
-    def load_file(self, mock_file: str):
-        with open(mock_file, 'r') as f:
-            mock_json = f.read()
-        self.load_json(mock_json)
+    def load_file(self, spec_file: str):
+        with open(spec_file, 'r') as f:
+            spec_json = f.read()
+        self.load_json(spec_json)
         return
 
-    def load_json(self, mock_json: str):
-        self.respgen.load_json(mock_json)
+    def load_json(self, spec_json: str):
+        self.respgen.load_spec_json(spec_json)
 
-    def load_dict(self, mock_dict: dict):
-        self.respgen.load_dict(mock_dict)
+    def load_dict(self, spec_dict: dict):
+        self.respgen.load_spec_dict(spec_dict)
+        self.server_header = self.respgen.server_header
         return
 
     def run(self, ip: str, port: int):

@@ -20,14 +20,115 @@ from http import HTTPStatus
 from typing import Pattern
 from yamas.reqresp import Request, Response, Method, ContentType
 from yamas.ex import MockSpecError, RequestError, ResponseError
+from copy import copy, deepcopy
+from jsonschema import validate
+from string import Template
+
+spec_schema = {
+    'title': 'Yamas Specification',
+    'description': 'Specification on mock response data for Yamas',
+    'type': 'object',
+    'properties': {
+        'global': {
+            'description': 'Global parameters',
+            'type': 'object',
+            'properties': {
+                'headers': {
+                    'description': 'Default HTTP headers',
+                    'type': 'object',
+                    'propertyNames': {
+                        'description': 'HTTP header name',
+                        'pattern': '^.+$'
+                    },
+                    'patternProperties': {
+                        '^.+$': {
+                            'description': 'HTTP header value',
+                            'type': 'string'
+                        }
+                    },
+                    'additionalProperties': False
+                },
+                'serverHeader': {
+                    'description': 'Server header',
+                    'type': 'string',
+                    'minLength': 1
+                }
+            }
+        },
+        'rules': {
+            'description': 'Rules of URL path patterns',
+            'type': 'object',
+            'propertyNames': {
+                'pattern': '^.+$'
+            },
+            'patternProperties': {
+                '^.+$': {
+                    'description': 'Mock response per HTTP method',
+                    'type': 'object',
+                    'propertyNames': {
+                        'description': 'HTTP method',
+                        'enum': [x.value for x in list(Method)]
+                    },
+                    'patternProperties': {
+                        '[A-Z]+': {
+                            'description': 'Mock response',
+                            'type': 'object',
+                            'properties': {
+                                'status': {
+                                    'description': 'HTTP response status code',
+                                    'type': 'integer',
+                                    'minimum': 100,
+                                    'maximum': 599
+                                },
+                                'headers': {
+                                    'description': 'HTTP response headers',
+                                    'type': 'object',
+                                    'propertyNames': {
+                                        'description': 'HTTP header name',
+                                        'pattern': '^.+$'
+                                    },
+                                    'patternProperties': {
+                                        '^.+$': {
+                                            'description': 'HTTP header value',
+                                            'type': 'string'
+                                        }
+                                    },
+                                    'additionalProperties': False
+                                },
+                                'interpolate': {
+                                    'description': 'Whether interpolation is applied',
+                                    'type': 'boolean'
+                                },
+                                'content': {
+                                    'description': 'String or JSON response content'
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    'additionalProperties': False
+}
+
+
+def check_headers(headers: dict):
+    if headers.get('Server'):
+        raise MockSpecError(
+            f'Server header should only be given as a global field')
 
 
 class ResponseMaker:
-    def __init__(self, status: HTTPStatus, headers: dict, content: any, content_type: ContentType, interpolate: bool):
+    def __init__(self, status: HTTPStatus, headers: dict, content: any, content_type: ContentType, interpolate: bool, global_headers: dict):
         self.status = status
         self.content_type = content_type
-        self.headers = headers
-        self.headers = headers if headers is not None else dict()
+        self.headers = copy(
+            global_headers) if global_headers is not None else OrderedDict()
+        check_headers(self.headers)
+        if headers:
+            for h in headers:
+                self.headers[h] = headers[h]
         self.content_bytes = None
         self.template = None
         self.interpolate = interpolate
@@ -90,7 +191,10 @@ class ResponseMaker:
     @staticmethod
     def format_content_template(template_item: any, vars: tuple) -> any:
         if isinstance(template_item, str):
-            return template_item.format(*vars)
+            kv = dict()
+            for i, v in enumerate(vars):
+                kv[f'p{i}'] = v
+            return Template(template_item).substitute(kv)
         if isinstance(template_item, dict):
             content_dict = OrderedDict()
             for k, v in template_item.items():
@@ -164,11 +268,37 @@ class MockResponse:
 class PatternResponseGenerator(ResponseGenerator):
 
     def __init__(self):
-        self.matchers = OrderedDict()
+        self.rules = OrderedDict()
+        self.global_headers = OrderedDict()
+        self.server_header = None
         return
 
-    def load_dict(self, matcher_dict: OrderedDict):
-        for pat, resps in matcher_dict.items():
+    def load_spec_json(self, spec_json: str):
+        try:
+            spec_dict = loads(spec_json, object_pairs_hook=OrderedDict)
+            self.load_spec_dict(spec_dict)
+        except Exception as e:
+            raise MockSpecError(f'Failed to parse JSON: {e}')
+        return
+
+    def load_spec_dict(self, spec_dict: dict):
+        validate(instance=spec_dict, schema=spec_schema)
+        global_dict = spec_dict.get('global')
+        if global_dict:
+            global_headers = global_dict.get('headers')
+            if global_headers:
+                check_headers(global_headers)
+                for header in global_headers:
+                    self.global_headers[header] = global_headers[header]
+            self.server_header = global_dict.get('serverHeader')
+            if self.server_header is not None and not isinstance(self.server_header, str):
+                raise MockSpecError(f'Server header must be a string if given')
+        rule_dict = spec_dict.get('rules')
+        if rule_dict:
+            self.load_rule_dict(rule_dict)
+
+    def load_rule_dict(self, rule_dict: OrderedDict):
+        for pat, resps in rule_dict.items():
             try:
                 cpat = re.compile(pat)
             except:
@@ -183,7 +313,7 @@ class PatternResponseGenerator(ResponseGenerator):
                 except MockSpecError as e:
                     raise MockSpecError(
                         f'Error parsing mock responses for pattern {pat} and {method.value}: {e}')
-                self.add_matcher(cpat, method, mock_response)
+                self.add_rule(cpat, method, mock_response)
         return
 
     @staticmethod
@@ -213,27 +343,20 @@ class PatternResponseGenerator(ResponseGenerator):
         return MockResponse(status, headers, content,
                             content_type, interpolate)
 
-    def load_json(self, matcher_json: str):
-        try:
-            matcher_dict = loads(matcher_json, object_pairs_hook=OrderedDict)
-        except Exception as e:
-            raise MockSpecError(f'Failed to parse JSON: {e}')
-        self.load_dict(matcher_dict)
-        return
-
-    def add_matcher(self, pattern: Pattern, method: Method,
-                    mock_response: MockResponse):
-        respsel_dict = self.matchers.get(pattern)
+    def add_rule(self, pattern: Pattern, method: Method,
+                 mock_response: MockResponse):
+        respsel_dict = self.rules.get(pattern)
         if not respsel_dict:
             respsel_dict = {method: ResponseSelector(loop=False)
                             for method in list(Method)}
-            self.matchers[pattern] = respsel_dict
+            self.rules[pattern] = respsel_dict
         respsel_dict[method].add_response_maker(
             ResponseMaker(mock_response.status, mock_response.headers,
-                          mock_response.content, mock_response.content_type, mock_response.interpolate))
+                          mock_response.content, mock_response.content_type,
+                          mock_response.interpolate, self.global_headers))
 
     def respond(self, request: Request) -> Response:
-        for cpat, respsel_dict in self.matchers.items():
+        for cpat, respsel_dict in self.rules.items():
             match = cpat.fullmatch(request.path)
             if match:
                 respsel = respsel_dict.get(request.method)
