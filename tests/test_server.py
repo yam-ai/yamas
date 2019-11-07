@@ -21,6 +21,8 @@ from threading import Thread
 from json import loads
 import requests
 from yamas.config import SERVER_NAME, VERSION
+import logging
+LOGGER = logging.getLogger(__name__)
 
 VALID_JSON = '''
 {
@@ -140,7 +142,6 @@ def yamas():
     thread = Thread(target=server.run, args=(HOST, PORT))
     thread.daemon = True
     thread.start()
-    print(f'Yamas test server is running on {HOST}:{PORT}')
     return server
 
 
