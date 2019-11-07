@@ -38,8 +38,8 @@ prg_valid_json.load_spec_json(dumps(
                 'GET': {
                     'status': 200,
                     'content': {
-                        'user': '$p0',
-                        'taskid': '$p1',
+                        'user': '$p_0',
+                        'taskid': '$p_1',
                         'task': 'Buy milk',
                         'pri': 'low'
                     },
@@ -70,7 +70,7 @@ prg_valid_json.load_spec_json(dumps(
                     'headers': {
                         'Content-Type': 'application/xml'
                     },
-                    'content': '<profile><user>$p0</user><org>yam.ai</org><grade>premium</grade></profile>',
+                    'content': '<profile><user>$p_0</user><org>yam.ai</org><grade>premium</grade></profile>',
                     'interpolate': True
                 },
                 'PUT': {
@@ -85,7 +85,7 @@ prg_valid_json.load_spec_json(dumps(
                     'headers': {
                         'Content-Type': ''
                     },
-                    'content': 'Hello $p0',
+                    'content': 'Hello $p_0',
                     'contentType': 'text',
                     'interpolate': True
                 },
@@ -94,7 +94,7 @@ prg_valid_json.load_spec_json(dumps(
                     'headers': {
                         'Content-Type': ''
                     },
-                    'content': {'hello': '$p0'},
+                    'content': {'hello': '$p_0'},
                     'contentType': 'json',
                     'interpolate': True
                 }
@@ -113,7 +113,7 @@ prg_for_testing_interpolation.load_spec_dict(
             '^/hello/(\\w)+$': {
                 'GET': {
                     'status': 200,
-                    'content': 'hello $p0 and $p1',
+                    'content': 'hello $p_0 and $p_1',
                     'interpolate': True,
                     'headers': {'a': 'one', 'b': 'two'}
                 }
@@ -121,7 +121,7 @@ prg_for_testing_interpolation.load_spec_dict(
             '^/hello/(\\w)+/world/(\\d)+$': {
                 'POST': {
                     'status': 200,
-                    'content': 'hello $p0',
+                    'content': 'hello $p_0',
                     'interpolate': True
                 }
             }
@@ -343,8 +343,8 @@ class TestPatternResponseGenerator:
             'rules': {
                 '.*': {
                     'GET': {
-                        'content': '$p0',
-                        'interpolate': 'not boolean' 
+                        'content': '$p_0',
+                        'interpolate': 'not boolean'
                     }
                 }
             }
@@ -376,7 +376,7 @@ class TestPatternResponseGenerator:
             'global': {
                 'serverHeader': 1
             }
-        },        
+        },
         {
             'global': {
                 'serverHeader': ''

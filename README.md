@@ -8,7 +8,7 @@ The mock responses and the rules of selecting them are specified in a JSON file.
 
 ## Usage
 
-Yamas has been published to [PyPI](https://pypi.org). You can use `pip` to install Yamas:
+Yamas has been published to [PyPI](https://pypi.org/project/yamas/). You can use `pip` to install Yamas:
 
 ```sh
 pip install yamas
@@ -59,8 +59,8 @@ The mock responses and the rules of selecting them are specified in a JSON file,
             "GET": {
                 "status": 200,
                 "content": {
-                    "user": "$p0",
-                    "taskid": "$p1",
+                    "user": "$p_0",
+                    "taskid": "$p_1",
                     "task": "Buy milk",
                     "pri": "low"
                 },
@@ -95,7 +95,7 @@ The mock responses and the rules of selecting them are specified in a JSON file,
                 "headers": {
                     "Content-Type": "application/xml"
                 },
-                "content": "<profile><user>$p0</user><org>yam.ai</org><grade>premium</grade></profile>",
+                "content": "<profile><user>$p_0</user><org>yam.ai</org><grade>premium</grade></profile>",
                 "contentType": "text",
                 "interpolate": true
             },
@@ -111,7 +111,7 @@ The mock responses and the rules of selecting them are specified in a JSON file,
                 "headers": {
                     "Content-Type": ""
                 },
-                "content": "Hello $p0",
+                "content": "Hello $p_0",
                 "contentType": "text",
                 "interpolate": true
             },
@@ -121,7 +121,7 @@ The mock responses and the rules of selecting them are specified in a JSON file,
                     "Content-Type": ""
                 },
                 "content": {
-                    "hello": "$p0"
+                    "hello": "$p_0"
                 },
                 "contentType": "json",
                 "interpolate": true
@@ -150,7 +150,7 @@ The mock response object contains the following:
   * `text`: `content` must be a string of the [UTF-8](https://en.wikipedia.org/wiki/UTF-8) text content. The header `Content-Type: text/plain` will be automatically added unless it is overriden by a user-specified `Content-Type` header.
   * `json`: `content` is treated as a JSON value. The header `Content-Type: application/json` will be automatically added unless it is overriden by a user-specified `Content-Type` header.
   * `contentType` is omitted: `content` is treated as `text` except the header `Content-Type: text/plain` is not automatically added.
-* `interpolate` specifies whether the matched values of the capturing groups in the request path will replace the placeholders in the content template. It is `false` by default. When `interpolate` is `true`, every string value in `content` is expected to be a [Python template string](https://docs.python.org/3/library/string.html#template-strings). If `content` is `text`, the value is treated as a template. If the `content` is `json`, every string value in the object is treated as a template. As shown in the the above example, the placeholder `$p`*`n`* will be replaced with the matched value of the *n*-th capturing group in the request path pattern. As in the above example, `$p0` will be substituted with the matched value of the first capturing group `(\w+)` in the pattern path `^/users/(\w+)/todo/(\d+)$`, `$p1` will be substituted with the value of the second matched capturing group `(\d+)`. Note: the special character `$` should be escaped as `$$`.
+* `interpolate` specifies whether the matched values of the capturing groups in the request path will replace the placeholders in the content template. It is `false` by default. When `interpolate` is `true`, every string value in `content` is expected to be a [Python template string](https://docs.python.org/3/library/string.html#template-strings). If `content` is `text`, the value is treated as a template. If the `content` is `json`, every string value in the object is treated as a template. As shown in the the above example, the placeholder `$p_`*`i`* will be replaced with the matched value of the *i*-th capturing group in the request path pattern. As in the above example, `$p_0` will be substituted with the matched value of the first capturing group `(\w+)` in the pattern path `^/users/(\w+)/todo/(\d+)$`, `$p_1` will be substituted with the value of the second matched capturing group `(\d+)`. Note: the special character `$` should be escaped as `$$`.
 
 ## Professional services
 
