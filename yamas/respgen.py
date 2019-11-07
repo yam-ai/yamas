@@ -193,7 +193,7 @@ class ResponseMaker:
         if isinstance(template_item, str):
             kv = dict()
             for i, v in enumerate(vars):
-                kv[f'p{i}'] = v
+                kv[f'p_{i}'] = v
             return Template(template_item).substitute(kv)
         if isinstance(template_item, dict):
             content_dict = OrderedDict()
