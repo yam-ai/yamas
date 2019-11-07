@@ -2,7 +2,7 @@
 
 This project develops a simple mock API server for prototyping and testing client applications.  
 
-Based on [`http.server`](https://docs.python.org/3.6/library/http.server.html) of Python3.6+, Yamas is a testing API server which can accept HTTP requests from a client and reply with pre-defined mock HTTP responses. (*Note: Yamas should not be used for production.*)
+Based on [`http.server`](https://docs.python.org/3.6/library/http.server.html) of Python 3.6+, Yamas is a testing API server which can accept HTTP requests from a client and reply with pre-defined mock HTTP responses. (*Note: Yamas should not be used for production.*)
 
 The mock responses and the rules of selecting them are specified in a JSON file. Processing an request, Yamas locates the wanted mock response by matching the request path with a sequence of user-specified regular expressions and then looking up the response by the request method.
 
