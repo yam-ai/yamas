@@ -71,7 +71,7 @@ The mock responses and the rules of selecting them are specified in a JSON file,
                 "status": 410
             }
         },
-        "^/users/\\w+/todo/?": {
+        "^/users/\\w+/todo/?$": {
             "GET": {
                 "status": 200,
                 "content": [
