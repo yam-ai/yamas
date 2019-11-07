@@ -18,9 +18,7 @@ from typing import Callable
 from yamas.respgen import Method, ResponseGenerator, PatternResponseGenerator
 from yamas.handler import MockRequestHandler
 from yamas.ex import MockSpecError, ServerError
-
-SERVER_HEADER = 'yamas'
-SYS_VERSION = '0.1'
+from yamas.config import VERSION, SERVER_NAME
 
 
 class Yamas:
@@ -32,8 +30,8 @@ class Yamas:
             handler_class.server_version = ''
             handler_class.sys_version = respgen.server_header
         else:
-            handler_class.server_version = SERVER_HEADER
-            handler_class.sys_version = SYS_VERSION
+            handler_class.server_version = SERVER_NAME
+            handler_class.sys_version = VERSION
         return handler_class
 
     def __init__(self):
@@ -49,7 +47,6 @@ class Yamas:
 
     def load_json(self, spec_json: str):
         self.respgen.load_spec_json(spec_json)
-        
 
     def load_dict(self, spec_dict: dict):
         self.respgen.load_spec_dict(spec_dict)

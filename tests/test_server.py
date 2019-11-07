@@ -20,6 +20,7 @@ from yamas.ex import MockSpecError
 from threading import Thread
 from json import loads
 import requests
+from yamas.config import SERVER_NAME, VERSION
 
 VALID_JSON = '''
 {
@@ -106,8 +107,30 @@ VALID_JSON = '''
 
 INVALID_JSON = 'this is not a json'
 
+HELLO_JSON = '''
+{ 
+    "global": {
+        "headers": {
+            "Access-Control-Allow-Origin": "*"
+        }
+    },
+    "rules": {
+        "^/hello/(\\\\w+)$": {
+            "GET": {
+                "status": 201,
+                "headers": { "X-Hello": "World" },
+                "contentType": "text",
+                "content": "Hello, $p0",
+                "interpolate": true
+            }
+        }
+    }
+}
+'''
+
 HOST = 'localhost'
 PORT = 7777
+PORT2 = 6666
 
 
 @pytest.fixture(scope='session', autouse=True)
@@ -122,6 +145,27 @@ def yamas():
 
 
 class TestYamas:
+
+    @patch('builtins.open', new_callable=mock_open, read_data=HELLO_JSON)
+    def test_hello_world(self, mock_file):
+        mock_spec = '/some/mock/response/json'
+        server = Yamas()
+        server.load_file(mock_spec)
+        mock_file.assert_called_with(mock_spec, 'r')
+        thread = Thread(target=server.run, args=(HOST, PORT2))
+        thread.daemon = True
+        thread.start()
+        response = requests.get(
+            f'http://{HOST}:{PORT2}/hello/world', headers={}, data={})
+        del response.headers['Date']
+        assert response.headers == {
+            'Server': f'{SERVER_NAME} {VERSION}',
+            'X-Hello': 'World',
+            'Access-Control-Allow-Origin': '*',
+            'Content-Type': 'text/plain'
+        }
+        assert response.status_code == 201
+        assert response.content == b'Hello, world'
 
     @patch('builtins.open', new_callable=mock_open, read_data=VALID_JSON)
     def test_load_file(self, mock_file):
